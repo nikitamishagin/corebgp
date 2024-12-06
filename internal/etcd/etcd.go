@@ -10,6 +10,12 @@ type Client struct {
 	cli *etcdclientv3.Client
 }
 
+type Config struct {
+	Endpoints []string
+	Cert      string
+	Key       string
+}
+
 func NewClient(configPath string) (*Client, error) {
 	// This should read the configuration from configPath (e.g., YAML, JSON, etc.).
 	// Here we're just simulating the client creation.
