@@ -14,8 +14,8 @@ func NewClient(configPath string) (*Client, error) {
 	// This should read the configuration from configPath (e.g., YAML, JSON, etc.).
 	// Here we're just simulating the client creation.
 	cfg := etcdclientv3.Config{
-		Endpoints:   []string{"localhost:2379"}, // Replace with endpoints from config
-		DialTimeout: 5 * etcdclientv3.DefaultDialTimeout,
+		Endpoints: []string{"localhost:2379"}, // Replace with endpoints from config
+		//DialTimeout: 5 * etcdclientv3.DefaultDialTimeout,
 	}
 
 	cli, err := etcdclientv3.New(cfg)
