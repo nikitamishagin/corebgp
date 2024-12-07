@@ -2,6 +2,7 @@ package apiserver
 
 import "github.com/gin-gonic/gin"
 
+// NewAPIServer initializes and runs a new API server on port 8080. It returns an error if the server fails to start.
 func NewAPIServer() error {
 	router := setupRouter()
 
@@ -13,6 +14,7 @@ func NewAPIServer() error {
 	return nil
 }
 
+// setupRouter initializes and returns a new Gin Engine with predefined routes for health checks and API endpoints.
 func setupRouter() *gin.Engine {
 	router := gin.Default()
 

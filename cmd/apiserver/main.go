@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// main is the entry point of the application that starts the CoreBGP API server.
 func main() {
 	err := apiserver.Run()
 	if err != nil {

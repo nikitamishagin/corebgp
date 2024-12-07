@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewRootCmd initializes and returns the root command for the CoreBGP API server application.
 func NewRootCmd() *cobra.Command {
 	//var config model.APIConfig
 	var cmd = &cobra.Command{
