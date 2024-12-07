@@ -26,9 +26,9 @@ func setupRouter() *gin.Engine {
 		})
 	})
 
-	router.GET("/service/v1beta", func(c *gin.Context) {
+	router.GET("/components/v1beta", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"message": "service v1beta endpoint",
+			"message": "components v1beta endpoint",
 		})
 	})
 
