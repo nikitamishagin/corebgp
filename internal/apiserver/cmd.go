@@ -11,7 +11,11 @@ func NewRootCmd() *cobra.Command {
 		Use:   "apiserver",
 		Short: "CoreBGP API server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := NewAPIServer(); err != nil {
+			etcdClient, err := NewEtcdClient()
+			if err != nil {
+				return err
+			}
+			if err := NewAPIServer(etcdClient); err != nil {
 				return err
 			}
 			return nil

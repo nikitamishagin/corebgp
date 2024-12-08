@@ -6,8 +6,8 @@ import (
 )
 
 // NewAPIServer initializes and runs a new API server on port 8080. It returns an error if the server fails to start.
-func NewAPIServer() error {
-	router := setupRouter()
+func NewAPIServer(etcdClient *EtcdClient) error {
+	router := setupRouter(etcdClient)
 
 	err := router.Run(":8080")
 	if err != nil {
@@ -18,7 +18,7 @@ func NewAPIServer() error {
 }
 
 // setupRouter initializes and returns a new Gin Engine with predefined routes for health checks and API endpoints.
-func setupRouter() *gin.Engine {
+func setupRouter(etcdClient *EtcdClient) *gin.Engine {
 	endpoints := []string{
 		"announces/v1beta",
 		"components/v1beta",
@@ -32,9 +32,18 @@ func setupRouter() *gin.Engine {
 
 	for _, endpoint := range endpoints {
 		// Read routes
-		router.GET("/"+endpoint, func(c *gin.Context) {
+		router.GET("/"+endpoint+"/:key", func(c *gin.Context) {
+			key := c.Param("key")
+
+			// Retrieve data from etcd
+			value, err := etcdClient.GetData(key)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+
 			c.JSON(http.StatusOK, gin.H{
-				"message": endpoint + " endpoint",
+				"value": value,
 			})
 		})
 
@@ -45,9 +54,15 @@ func setupRouter() *gin.Engine {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
+			// Store data to etcd
+			for key, value := range data {
+				if err := etcdClient.PutData(key, value.(string)); err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
+				}
+			}
 			c.JSON(http.StatusOK, gin.H{
-				"message": "Test data received for " + endpoint,
-				"data":    data,
+				"message": "Data stored in etcd",
 			})
 		})
 	}
