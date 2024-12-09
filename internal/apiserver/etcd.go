@@ -45,6 +45,20 @@ func NewEtcdClient() (*EtcdClient, error) {
 	return &EtcdClient{client: cli}, nil
 }
 
+// CheckHealth verifies the health status of the etcd client by querying the status of the first endpoint.
+// It returns an error if the health check fails, indicating that the etcd client may be unreachable.
+func (e *EtcdClient) CheckHealth() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Simple status check via the shortest operation
+	_, err := e.client.Status(ctx, e.client.Endpoints()[0])
+	if err != nil {
+		return fmt.Errorf("etcd health check failed: %w", err)
+	}
+	return nil
+}
+
 func (e *EtcdClient) PutData(key, value string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -27,7 +27,12 @@ func setupRouter(etcdClient *EtcdClient) *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/healthz", func(c *gin.Context) {
-		c.String(200, "ok")
+		// Check connection to etcd
+		if err := etcdClient.CheckHealth(); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
+			return
+		}
+		c.String(http.StatusOK, "ok")
 	})
 
 	for _, endpoint := range endpoints {
