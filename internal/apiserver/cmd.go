@@ -12,7 +12,18 @@ func RootCmd() *cobra.Command {
 		Use:   "apiserver",
 		Short: "CoreBGP API server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			etcdClient, err := NewEtcdClient()
+			//&config.EtcdEndpoints := strings.Split(etcdEndpoints, ",")
+			//
+			//// Checking that all elements in a list are not empty
+			//for i, endpoint := range &config.EtcdEndpoints {
+			//	endpoint = strings.TrimSpace(endpoint) // Remove spaces
+			//	if endpoint == "" {
+			//		return fmt.Errorf("etcd endpoint cannot be empty")
+			//	}
+			//	&config.EtcdEndpoints[i] := endpoint
+			//}
+
+			etcdClient, err := NewEtcdClient(&config)
 			if err != nil {
 				return err
 			}
