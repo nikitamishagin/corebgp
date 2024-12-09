@@ -18,8 +18,8 @@ docker run -d \
   quay.io/coreos/etcd:v3.5.17 \
   /usr/local/bin/etcd \
     --data-dir=/etcd-data \
-    --advertise-client-urls=http://localhost:2379 \
-    --listen-client-urls=http://0.0.0.0:2379 \
+    --advertise-client-urls=https://localhost:2379 \
+    --listen-client-urls=https://0.0.0.0:2379 \
     --cert-file=/etc/ssl/certs/server.crt \
     --key-file=/etc/ssl/certs/server.key \
     --client-cert-auth \
