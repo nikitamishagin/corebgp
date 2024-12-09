@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/nikitamishagin/corebgp/internal/model"
 	"go.etcd.io/etcd/client/v3"
 	"os"
 	"time"
@@ -14,8 +15,8 @@ type EtcdClient struct {
 	client *clientv3.Client
 }
 
-func NewEtcdClient() (*EtcdClient, error) {
-	caCert, err := os.ReadFile("./certs/ca.crt")
+func NewEtcdClient(config *model.APIConfig) (*EtcdClient, error) {
+	caCert, err := os.ReadFile(config.EtcdCACert)
 	if err != nil {
 		return nil, fmt.Errorf("could not read CA certificate: %w", err)
 	}
@@ -24,7 +25,7 @@ func NewEtcdClient() (*EtcdClient, error) {
 		return nil, fmt.Errorf("failed to append CA certificate")
 	}
 
-	cert, err := tls.LoadX509KeyPair("./certs/client.crt", "./certs/client.key")
+	cert, err := tls.LoadX509KeyPair(config.EtcdClientCert, config.EtcdClientKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not load client certificate and key: %w", err)
 	}
@@ -35,7 +36,7 @@ func NewEtcdClient() (*EtcdClient, error) {
 	}
 
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"localhost:2379"},
+		Endpoints:   []string{config.EtcdEndpoints},
 		DialTimeout: 3 * time.Second,
 		TLS:         tlsConfig,
 	})
@@ -85,4 +86,15 @@ func (e *EtcdClient) GetData(key string) (string, error) {
 
 	value := string(resp.Kvs[0].Value)
 	return value, nil
+}
+
+func (e *EtcdClient) DeleteData(key string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := e.client.Delete(ctx, key)
+	if err != nil {
+		return fmt.Errorf("failed to delete data from etcd: %w", err)
+	}
+	return nil
 }
