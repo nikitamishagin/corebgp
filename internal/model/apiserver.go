@@ -1,7 +1,7 @@
 package model
 
 type APIConfig struct {
-	EtcdEndpoints  string
+	EtcdEndpoints  []string
 	EtcdCACert     string
 	EtcdClientCert string
 	EtcdClientKey  string

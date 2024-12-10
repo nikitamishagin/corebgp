@@ -1,27 +1,28 @@
 package apiserver
 
 import (
+	"fmt"
 	"github.com/nikitamishagin/corebgp/internal/model"
 	"github.com/spf13/cobra"
+	"strconv"
+	"strings"
 )
 
 // RootCmd initializes and returns the root command for the CoreBGP API server application.
 func RootCmd() *cobra.Command {
-	var config model.APIConfig
+	var (
+		etcdEndpointsList string
+		config            model.APIConfig
+	)
 	var cmd = &cobra.Command{
 		Use:   "apiserver",
 		Short: "CoreBGP API server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			//&config.EtcdEndpoints := strings.Split(etcdEndpoints, ",")
-			//
-			//// Checking that all elements in a list are not empty
-			//for i, endpoint := range &config.EtcdEndpoints {
-			//	endpoint = strings.TrimSpace(endpoint) // Remove spaces
-			//	if endpoint == "" {
-			//		return fmt.Errorf("etcd endpoint cannot be empty")
-			//	}
-			//	&config.EtcdEndpoints[i] := endpoint
-			//}
+			endpoints, err := parseEndpoints(etcdEndpointsList)
+			if err != nil {
+				return err
+			}
+			config.EtcdEndpoints = endpoints
 
 			etcdClient, err := NewEtcdClient(&config)
 			if err != nil {
@@ -34,7 +35,7 @@ func RootCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&config.EtcdEndpoints, "etcd-endpoints", "http://localhost:2379", "Comma separated list of etcd endpoints")
+	cmd.Flags().StringVar(&etcdEndpointsList, "etcd-endpoints", "http://localhost:2379", "Comma separated list of etcd endpoints")
 	cmd.Flags().StringVar(&config.EtcdCACert, "etcd-ca", "", "Path to etcd CA certificate")
 	cmd.Flags().StringVar(&config.EtcdClientCert, "etcd-cert", "", "Path to etcd client certificate")
 	cmd.Flags().StringVar(&config.EtcdClientKey, "etcd-key", "", "Path to etcd client key")
