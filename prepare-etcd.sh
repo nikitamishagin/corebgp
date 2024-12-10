@@ -4,8 +4,8 @@ openssl genrsa -out ./certs/ca.key 2048
 openssl req -x509 -new -nodes -key ./certs/ca.key -sha256 -days 1024 -out ./certs/ca.crt -subj "/CN=etcd-ca"
 
 openssl genrsa -out ./certs/server.key 2048
-openssl req -new -key ./certs/server.key -out ./certs/server.csr -config openssl.cnf
-openssl x509 -req -in ./certs/server.csr -CA ./certs/ca.crt -CAkey ./certs/ca.key -CAcreateserial -out ./certs/server.crt -days 365 -sha256 -extensions v3_ca -extfile openssl.cnf
+openssl req -new -key ./certs/server.key -out ./certs/server.csr -config ./certs/openssl.cnf
+openssl x509 -req -in ./certs/server.csr -CA ./certs/ca.crt -CAkey ./certs/ca.key -CAcreateserial -out ./certs/server.crt -days 365 -sha256 -extensions v3_ca -extfile ./certs/openssl.cnf
 openssl genrsa -out ./certs/client.key 2048
 openssl req -new -key ./certs/client.key -out ./certs/client.csr -subj "/CN=etcd-client"
 openssl x509 -req -in ./certs/client.csr -CA ./certs/ca.crt -CAkey ./certs/ca.key -CAcreateserial -out ./certs/client.crt -days 365 -sha256
