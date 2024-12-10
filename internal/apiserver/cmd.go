@@ -46,3 +46,44 @@ func RootCmd() *cobra.Command {
 
 	return cmd
 }
+
+// parseEndpoints parses a comma-separated list of endpoints, validates each, and returns a slice of formatted endpoints.
+// Returns an error if any endpoint is invalid, empty, or if the port is not within the valid range (1-65535).
+func parseEndpoints(endpoints string) ([]string, error) {
+	if endpoints == "" {
+		return []string{}, fmt.Errorf("etcd endpoint cannot be empty")
+	}
+
+	endpointsSlice := strings.Split(endpoints, ",")
+	var result []string
+
+	// Checking that all elements in a list are valid and parsing them
+	for i := range endpointsSlice {
+		baseURL := strings.TrimSpace(endpointsSlice[i])
+		if baseURL == "" {
+			return []string{}, fmt.Errorf("etcd endpoint cannot be empty")
+		}
+
+		protocolAndHost := strings.Split(baseURL, "//")
+		if len(protocolAndHost) != 2 {
+			return []string{}, fmt.Errorf("endpoint must be in format http(s)://host:port")
+		}
+
+		hostAndPort := strings.Split(protocolAndHost[1], ":")
+		if len(hostAndPort) != 2 {
+			return []string{}, fmt.Errorf("endpoint must be in format http(s)://host:port")
+		}
+
+		port, err := strconv.ParseUint(hostAndPort[1], 10, 64)
+		if err != nil {
+			return []string{}, fmt.Errorf("port must be a number")
+		}
+		if port < 1 || port > 65535 {
+			return []string{}, fmt.Errorf("port must be between 1 and 65535")
+		}
+
+		result = append(result, protocolAndHost[1])
+	}
+
+	return result, nil
+}
