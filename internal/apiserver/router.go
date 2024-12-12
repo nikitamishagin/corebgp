@@ -1,7 +1,9 @@
 package apiserver
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/nikitamishagin/corebgp/internal/model"
 	"net/http"
 )
 
@@ -19,11 +21,6 @@ func NewAPIServer(etcdClient *EtcdClient) error {
 
 // setupRouter initializes and returns a new Gin Engine with predefined routes for health checks and API endpoints.
 func setupRouter(etcdClient *EtcdClient) *gin.Engine {
-	endpoints := []string{
-		"announces/v1beta",
-		"components/v1beta",
-	}
-
 	router := gin.Default()
 
 	router.GET("/healthz", func(c *gin.Context) {
@@ -35,41 +32,53 @@ func setupRouter(etcdClient *EtcdClient) *gin.Engine {
 		c.String(http.StatusOK, "ok")
 	})
 
-	for _, endpoint := range endpoints {
-		// Read routes
-		router.GET("/"+endpoint+"/:key", func(c *gin.Context) {
-			key := c.Param("key")
+	v1 := router.Group("/v1")
 
-			// Retrieve data from etcd
-			value, err := etcdClient.GetData(key)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
+	v1.GET("/announces/:project/:name", func(c *gin.Context) {
+		// Extract params from path
+		project := c.Param("project")
+		name := c.Param("name")
 
-			c.JSON(http.StatusOK, gin.H{
-				"value": value,
-			})
-		})
+		// Create key for etcd data
+		key := "v1/announces/" + project + "/" + name
 
-		// Write routes
-		router.POST("/"+endpoint, func(c *gin.Context) {
-			var data map[string]interface{}
-			if err := c.ShouldBindJSON(&data); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-			// Store data to etcd
-			for key, value := range data {
-				if err := etcdClient.PutData(key, value.(string)); err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-					return
-				}
-			}
-			c.JSON(http.StatusOK, gin.H{
-				"message": "Data stored in etcd",
-			})
-		})
-	}
+		// Retrieve data from etcd
+		value, err := etcdClient.GetData(key)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		var announce model.Announce
+		err = json.Unmarshal([]byte(value), &announce)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unmarshal announce"})
+			return
+		}
+
+		c.JSON(http.StatusOK, announce)
+	})
+
+	// Write routes
+	v1.POST("/announces/", func(c *gin.Context) {
+		var data model.Announce
+		if err := c.ShouldBindJSON(&data); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		value, err := json.Marshal(data)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
+		err = etcdClient.PutData("v1/announces/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, gin.H{"message": "Data written successfully"})
+	})
+
 	return router
 }
