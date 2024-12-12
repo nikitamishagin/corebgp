@@ -36,7 +36,7 @@ func NewEtcdClient(config *model.APIConfig) (*EtcdClient, error) {
 	}
 
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{config.EtcdEndpoints},
+		Endpoints:   config.EtcdEndpoints,
 		DialTimeout: 3 * time.Second,
 		TLS:         tlsConfig,
 	})
