@@ -122,5 +122,27 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "Announce updated successfully"})
 	})
+
+	v1.DELETE("/announces/:project/:name", func(c *gin.Context) {
+		project := c.Param("project")
+		name := c.Param("name")
+
+		key := "v1/announces/" + project + "/" + name
+		_, err := db.Get(key)
+		if err != nil && err.Error() == "Key not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "announce not found"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check announce existence"})
+		}
+		err = db.Delete(key)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Announce deleted successfully"})
+	})
+
 	return router
 }
