@@ -89,7 +89,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusCreated, gin.H{"message": "Data written successfully"})
+		c.JSON(http.StatusCreated, gin.H{"message": "Announce added successfully"})
 	})
 
 	v1.PATCH("/announces/:project/:name", func(c *gin.Context) {
