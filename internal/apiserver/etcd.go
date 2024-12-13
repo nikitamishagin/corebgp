@@ -111,3 +111,26 @@ func (e *EtcdClient) Patch(key, value string) error {
 	}
 	return nil
 }
+
+func (e *EtcdClient) Watch(key string, stopChan <-chan struct{}) (<-chan clientv3.WatchResponse, error) {
+	eventsChan := make(chan clientv3.WatchResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		select {
+		case <-stopChan:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
+	go func() {
+		defer close(eventsChan)
+		rch := e.client.Watch(ctx, key, clientv3.WithPrefix())
+		for watchResp := range rch {
+			eventsChan <- watchResp
+		}
+	}()
+
+	return eventsChan, nil
+}

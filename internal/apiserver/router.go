@@ -3,6 +3,7 @@ package apiserver
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/nikitamishagin/corebgp/internal/model"
 	"net/http"
 )
@@ -44,6 +45,10 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 
 		// Retrieve data from etcd
 		value, err := db.Get(key)
+		if err != nil && err.Error() == "key not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "announce not found"})
+			return
+		}
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -73,7 +78,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			c.JSON(http.StatusConflict, gin.H{"error": "announce already exists"})
 			return
 		}
-		if err != nil && err.Error() != "Key not found" {
+		if err != nil && err.Error() != "key not found" {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check announce existence"})
 			return
 		}
@@ -101,12 +106,12 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 
 		key := "v1/announces/" + data.Meta.Project + "/" + data.Meta.Name
 		_, err := db.Get(key)
-		if err != nil && err.Error() == "Key not found" {
+		if err != nil && err.Error() == "key not found" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "announce not found"})
 			return
 		}
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check announce existence"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -123,13 +128,60 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"message": "Announce updated successfully"})
 	})
 
+	// TODO: Fix websocket connection
+	// Объявляем объект для настройки WebSocket
+	var upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true // Позволяем соединение с любым клиентом
+		},
+	}
+
+	// Добавляем новый маршрут для Watch
+	v1.GET("/watch/announces/", func(c *gin.Context) {
+		// Обновляем HTTP-соединение до WebSocket
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to establish WebSocket connection"})
+			return
+		}
+		defer conn.Close()
+
+		// Создаем канал для остановки Watch
+		stopChan := make(chan struct{})
+		defer close(stopChan)
+
+		// Начинаем наблюдение за ключами с префиксом "/v1/announces/"
+		eventsChan, err := db.Watch("v1/announces/", stopChan)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start watching"})
+			return
+		}
+
+		// Чтение изменений из событий и отправка клиенту
+		for watchResp := range eventsChan {
+			for _, event := range watchResp.Events {
+				// Структура передачи события
+				watchEvent := gin.H{
+					"type":  event.Type.String(), // Тип события (PUT или DELETE)
+					"key":   string(event.Kv.Key),
+					"value": string(event.Kv.Value), // Значение при PUT
+				}
+
+				// Отправляем событие клиенту через WebSocket
+				if err := conn.WriteJSON(watchEvent); err != nil {
+					return
+				}
+			}
+		}
+	})
+
 	v1.DELETE("/announces/:project/:name", func(c *gin.Context) {
 		project := c.Param("project")
 		name := c.Param("name")
 
 		key := "v1/announces/" + project + "/" + name
 		_, err := db.Get(key)
-		if err != nil && err.Error() == "Key not found" {
+		if err != nil && err.Error() == "key not found" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "announce not found"})
 			return
 		}
