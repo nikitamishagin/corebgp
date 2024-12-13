@@ -8,8 +8,8 @@ import (
 )
 
 // NewAPIServer initializes and runs a new API server on port 8080. It returns an error if the server fails to start.
-func NewAPIServer(etcdClient *EtcdClient) error {
-	router := setupRouter(etcdClient)
+func NewAPIServer(databaseAdapter model.DatabaseAdapter) error {
+	router := setupRouter(databaseAdapter)
 
 	err := router.Run(":8080")
 	if err != nil {
@@ -20,12 +20,12 @@ func NewAPIServer(etcdClient *EtcdClient) error {
 }
 
 // setupRouter initializes and returns a new Gin Engine with predefined routes for health checks and API endpoints.
-func setupRouter(etcdClient *EtcdClient) *gin.Engine {
+func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/healthz", func(c *gin.Context) {
 		// Check connection to etcd
-		if err := etcdClient.CheckHealth(); err != nil {
+		if err := db.HealthCheck(); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
 			return
 		}
@@ -43,7 +43,7 @@ func setupRouter(etcdClient *EtcdClient) *gin.Engine {
 		key := "v1/announces/" + project + "/" + name
 
 		// Retrieve data from etcd
-		value, err := etcdClient.GetData(key)
+		value, err := db.Get(key)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -72,7 +72,7 @@ func setupRouter(etcdClient *EtcdClient) *gin.Engine {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		err = etcdClient.PutData("v1/announces/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
+		err = db.Put("v1/announces/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var _ model.DatabaseAdapter = (*EtcdClient)(nil)
+
 type EtcdClient struct {
 	client *clientv3.Client
 }
@@ -46,9 +48,9 @@ func NewEtcdClient(config *model.APIConfig) (*EtcdClient, error) {
 	return &EtcdClient{client: cli}, nil
 }
 
-// CheckHealth verifies the health status of the etcd client by querying the status of the first endpoint.
+// HealthCheck verifies the health status of the etcd client by querying the status of the first endpoint.
 // It returns an error if the health check fails, indicating that the etcd client may be unreachable.
-func (e *EtcdClient) CheckHealth() error {
+func (e *EtcdClient) HealthCheck() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -60,7 +62,7 @@ func (e *EtcdClient) CheckHealth() error {
 	return nil
 }
 
-func (e *EtcdClient) PutData(key, value string) error {
+func (e *EtcdClient) Put(key, value string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -71,7 +73,7 @@ func (e *EtcdClient) PutData(key, value string) error {
 	return nil
 }
 
-func (e *EtcdClient) GetData(key string) (string, error) {
+func (e *EtcdClient) Get(key string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -88,7 +90,7 @@ func (e *EtcdClient) GetData(key string) (string, error) {
 	return value, nil
 }
 
-func (e *EtcdClient) DeleteData(key string) error {
+func (e *EtcdClient) Delete(key string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
