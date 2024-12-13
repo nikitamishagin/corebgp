@@ -81,6 +81,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		value, err := json.Marshal(data)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 
 		err = db.Put("v1/announces/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
