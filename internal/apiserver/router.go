@@ -67,6 +67,17 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			return
 		}
 
+		key := "v1/announces/" + data.Meta.Project + "/" + data.Meta.Name
+		_, err := db.Get(key)
+		if err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "announce already exists"})
+			return
+		}
+		if err != nil && err.Error() != "Key not found" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check announce existence"})
+			return
+		}
+
 		value, err := json.Marshal(data)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
