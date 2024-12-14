@@ -128,17 +128,16 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"message": "Announce updated successfully"})
 	})
 
-	// TODO: Fix websocket connection
-	// Объявляем объект для настройки WebSocket
+	// Declare WebSocket upgrader object
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			return true // Позволяем соединение с любым клиентом
+			return true // Allow connections from any client
 		},
 	}
 
-	// Добавляем новый маршрут для Watch
+	// Route for watching announces
 	v1.GET("/watch/announces/", func(c *gin.Context) {
-		// Обновляем HTTP-соединение до WebSocket
+		// Upgrade HTTP connection to WebSocket
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to establish WebSocket connection"})
@@ -146,28 +145,39 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		}
 		defer conn.Close()
 
-		// Создаем канал для остановки Watch
+		// Create a channel to stop the Watch
 		stopChan := make(chan struct{})
-		defer close(stopChan)
 
-		// Начинаем наблюдение за ключами с префиксом "/v1/announces/"
+		// Start watching keys with the prefix "/v1/announces/"
 		eventsChan, err := db.Watch("v1/announces/", stopChan)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start watching"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start watching"})
 			return
 		}
 
-		// Чтение изменений из событий и отправка клиенту
+		// Goroutine to read from WebSocket connection
+		go func() {
+			defer close(stopChan)
+			for {
+				_, _, err := conn.ReadMessage()
+				if err != nil {
+					// Stop work on read error (e.g., the client disconnected)
+					return
+				}
+			}
+		}()
+
+		// Read changes from events and send them to the client
 		for watchResp := range eventsChan {
 			for _, event := range watchResp.Events {
-				// Структура передачи события
+				// Event structure to be transmitted
 				watchEvent := gin.H{
-					"type":  event.Type.String(), // Тип события (PUT или DELETE)
+					"type":  event.Type.String(), // Event type (PUT or DELETE)
 					"key":   string(event.Kv.Key),
-					"value": string(event.Kv.Value), // Значение при PUT
+					"value": string(event.Kv.Value), // Value on PUT
 				}
 
-				// Отправляем событие клиенту через WebSocket
+				// Send the event to the client via WebSocket
 				if err := conn.WriteJSON(watchEvent); err != nil {
 					return
 				}
