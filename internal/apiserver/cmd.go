@@ -41,6 +41,7 @@ func RootCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&config.DBType, "db-type", "etcd", "Database type")
 	cmd.Flags().StringVar(&endpointsList, "endpoints", "http://localhost:2379", "Comma separated list of database endpoints")
+	//cmd.Flags().StringSlice(&config.Endpoints, []string{"http://localhost:2379"}, "Comma separated list of database endpoints")
 	cmd.Flags().StringVar(&config.Etcd.CACert, "etcd-ca", "", "Path to etcd CA certificate")
 	cmd.Flags().StringVar(&config.Etcd.ClientCert, "etcd-cert", "", "Path to etcd client certificate")
 	cmd.Flags().StringVar(&config.Etcd.ClientKey, "etcd-key", "", "Path to etcd client key")
