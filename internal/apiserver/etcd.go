@@ -113,7 +113,6 @@ func (e *EtcdClient) Patch(key, value string) error {
 }
 
 func (e *EtcdClient) Watch(key string, stopChan <-chan struct{}) (<-chan clientv3.WatchResponse, error) {
-	eventsChan := make(chan clientv3.WatchResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -124,13 +123,5 @@ func (e *EtcdClient) Watch(key string, stopChan <-chan struct{}) (<-chan clientv
 		}
 	}()
 
-	go func() {
-		defer close(eventsChan)
-		rch := e.client.Watch(ctx, key, clientv3.WithPrefix())
-		for watchResp := range rch {
-			eventsChan <- watchResp
-		}
-	}()
-
-	return eventsChan, nil
+	return e.client.Watch(ctx, key, clientv3.WithPrefix()), nil
 }
