@@ -112,16 +112,24 @@ func (e *EtcdClient) Patch(key, value string) error {
 	return nil
 }
 
+// Watch sets up a watch operation on a specified key and streams events through a channel until the stop signal is received.
+// The stopChan is used to terminate the watch operation by canceling the associated context.
 func (e *EtcdClient) Watch(key string, stopChan <-chan struct{}) (<-chan clientv3.WatchResponse, error) {
+	// Create a context that can be canceled to stop the watch operation
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Start a goroutine to listen for a signal on stopChan
 	go func() {
 		select {
 		case <-stopChan:
+			// Stop the context when a signal is received on stopChan
 			cancel()
 		case <-ctx.Done():
+			// If the context is already done, exit the goroutine
 		}
 	}()
 
+	// Start watching the specified key with a prefix
+	// The returned channel streams events; the caller is responsible for processing them
 	return e.client.Watch(ctx, key, clientv3.WithPrefix()), nil
 }
