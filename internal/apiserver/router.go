@@ -46,7 +46,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		// Retrieve data from etcd
 		value, err := db.Get(key)
 		if err != nil && err.Error() == "key not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "announce not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "announcement not found"})
 			return
 		}
 		if err != nil {
@@ -54,19 +54,19 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			return
 		}
 
-		var announce model.Announce
-		err = json.Unmarshal([]byte(value), &announce)
+		var announcement model.Announcement
+		err = json.Unmarshal([]byte(value), &announcement)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unmarshal announce"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unmarshal announcement"})
 			return
 		}
 
-		c.JSON(http.StatusOK, announce)
+		c.JSON(http.StatusOK, announcement)
 	})
 
 	// Write routes
 	v1.POST("/announces/", func(c *gin.Context) {
-		var data model.Announce
+		var data model.Announcement
 		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -75,11 +75,11 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		key := "v1/announces/" + data.Meta.Project + "/" + data.Meta.Name
 		_, err := db.Get(key)
 		if err == nil {
-			c.JSON(http.StatusConflict, gin.H{"error": "announce already exists"})
+			c.JSON(http.StatusConflict, gin.H{"error": "announcement already exists"})
 			return
 		}
 		if err != nil && err.Error() != "key not found" {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check announce existence"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check announcement existence"})
 			return
 		}
 
@@ -94,11 +94,11 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusCreated, gin.H{"message": "Announce added successfully"})
+		c.JSON(http.StatusCreated, gin.H{"message": "Announcement added successfully"})
 	})
 
 	v1.PATCH("/announces/", func(c *gin.Context) {
-		var data model.Announce
+		var data model.Announcement
 		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -107,7 +107,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		key := "v1/announces/" + data.Meta.Project + "/" + data.Meta.Name
 		_, err := db.Get(key)
 		if err != nil && err.Error() == "key not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "announce not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "announcement not found"})
 			return
 		}
 		if err != nil {
@@ -125,7 +125,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Announce updated successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Announcement updated successfully"})
 	})
 
 	// Declare WebSocket upgrader object
@@ -192,18 +192,18 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		key := "v1/announces/" + project + "/" + name
 		_, err := db.Get(key)
 		if err != nil && err.Error() == "key not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "announce not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "announcement not found"})
 			return
 		}
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check announce existence"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check announcement existence"})
 		}
 		err = db.Delete(key)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Announce deleted successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Announcement deleted successfully"})
 	})
 
 	return router
