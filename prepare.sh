@@ -28,6 +28,7 @@ fi
 docker run -d \
     --name ${ETCD_CONTAINER_NAME} \
     --network host \
+    --rm \
     -v ${CERTS_PATH}:/etc/ssl/certs \
     ${ETCD_IMAGE} \
         /usr/local/bin/etcd \
@@ -42,6 +43,7 @@ docker run -d \
 docker run -d \
     --name ${GOBGP_CONTAINER_NAME} \
     --network host \
+    --rm \
     -v ${CERTS_PATH}:/etc/gobgp \
     ${GOBGP_IMAGE} \
         gobgpd -f /etc/gobgp/gobgp.toml \
