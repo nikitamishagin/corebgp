@@ -52,4 +52,4 @@ docker run -d \
         --tls true \
         --tls-cert-file /etc/gobgp/server.crt \
         --tls-key-file /etc/gobgp/server.key \
-        --tls-client-ca-file /etc/ca.crt
+        --tls-client-ca-file /etc/gobgp/ca.crt
