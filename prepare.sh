@@ -44,7 +44,8 @@ docker run -d \
 
 docker run -d \
     --name ${GOBGP_CONTAINER_NAME} \
-    --network host \
+    -p 179:179 \
+    -p 50051:50051 \
     --rm \
     -v ${CERTS_PATH}:/etc/gobgp \
     ${GOBGP_IMAGE} \
