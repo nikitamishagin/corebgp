@@ -80,7 +80,8 @@ func (g *GoBGPClient) AddAnnouncement(announcement model.Announcement) error {
 
 	// Construct the Path object
 	path := &api.Path{
-		Nlri: nlri,
+		Family: &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST},
+		Nlri:   nlri,
 		Pattrs: []*anypb.Any{
 			originAttr,
 			nextHopAttr,
