@@ -57,7 +57,7 @@ func (g *GoBGPClient) AddAnnouncement(announcement model.Announcement) error {
 	// Marshal the IP prefix (NLRI) into *anypb.Any
 	nlri, err := anypb.New(&api.IPAddressPrefix{
 		Prefix:    announcement.Addresses.AnnouncedIP,
-		PrefixLen: uint32(announcement.Addresses.SourceSubnets.Mask),
+		PrefixLen: 32,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal NLRI: %w", err)
