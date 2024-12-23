@@ -47,7 +47,6 @@ func RootCmd() *cobra.Command {
 	cmd.Flags().StringVar(&config.Etcd.ClientKey, "etcd-key", "", "Path to etcd client key")
 	cmd.Flags().StringVar(&config.TLSCert, "tls-cert", "", "Path to TLS certificate")
 	cmd.Flags().StringVar(&config.TLSKey, "tls-key", "", "Path to TLS key")
-	cmd.Flags().StringVar(&config.GoBGPInstance, "gobgp-instance", "http://localhost:50051", "Endpoint of GoBGP instance")
 	cmd.Flags().StringVarP(&config.LogPath, "log-path", "l", "/var/log/corebgp/apiserver.log", "Path to log file")
 	cmd.Flags().Int8VarP(&config.Verbose, "verbose", "v", 0, "Verbosity level")
 
