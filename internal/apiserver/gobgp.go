@@ -40,6 +40,7 @@ func (g *GoBGPClient) Close() {
 }
 
 // TODO: AddAnnouncement needs to be completed
+
 // AddAnnouncement adds a BGP announcement based on the given Announcement structure.
 func (g *GoBGPClient) AddAnnouncement(announcement model.Announcement) error {
 	// Generate the context for the gRPC call
