@@ -17,3 +17,14 @@ type Etcd struct {
 	ClientCert string `yaml:"client_cert"` // ClientCert specifies the file path to the client certificate for authenticating with the Etcd cluster.
 	ClientKey  string `yaml:"client_key"`  // ClientKey specifies the file path to the client private key used for authenticating with the Etcd cluster.
 }
+
+// UpdaterConfig represents the configuration parameters required to initialize and run the Updater controller.
+type UpdaterConfig struct {
+	APIEndpoint     string `yaml:"api_endpoint"`      // APIEndpoint specifies the URL to the API server endpoint.
+	GoBGPEndpoint   string `yaml:"gobgp_endpoint"`    // GoBGPEndpoint specifies the URL to the GoBGP API.
+	GoBGPCACert     string `yaml:"gobgp_ca_cert"`     // GoBGPCACert specifies the path to the GoBGP CA certificate file.
+	GoBGPClientCert string `yaml:"gobgp_client_cert"` // GoBGPClientCert specifies the path to the GoBGP client certificate file.
+	GoBGPClientKey  string `yaml:"gobgp_client_key"`  // GoBGPClientKey specifies the path to the GoBGP client key file.
+	LogPath         string `yaml:"log_path"`          // LogPath specifies the file path to the log file for storing updater logs.
+	Verbose         int8   `yaml:"verbose"`           // Verbose specifies the verbosity level for logging, where higher values produce more detailed logs.
+}

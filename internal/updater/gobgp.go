@@ -1,4 +1,4 @@
-package apiserver
+package updater
 
 import (
 	"context"
@@ -19,8 +19,8 @@ type GoBGPClient struct {
 }
 
 // NewGoBGPClient initializes the new GoBGP client
-func NewGoBGPClient(config *model.APIConfig) (*GoBGPClient, error) {
-	conn, err := grpc.Dial(config.GoBGPInstance, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewGoBGPClient(config *model.UpdaterConfig) (*GoBGPClient, error) {
+	conn, err := grpc.Dial(config.GoBGPEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
