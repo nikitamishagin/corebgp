@@ -18,6 +18,8 @@ openssl genrsa -out ./certs/client.key 2048
 openssl req -new -key ./certs/client.key -out ./certs/client.csr -subj "/CN=client"
 openssl x509 -req -in ./certs/client.csr -CA ./certs/ca.crt -CAkey ./certs/ca.key -CAcreateserial -out ./certs/client.crt -days 365 -sha256
 
+chmod -R 644 ${CERTS_PATH}/*
+
 if docker ps -a | grep -q ${ETCD_CONTAINER_NAME}; then
     docker stop ${ETCD_CONTAINER_NAME} && docker rm ${ETCD_CONTAINER_NAME}
 fi
