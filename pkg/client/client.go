@@ -19,9 +19,9 @@ type APIClient struct {
 }
 
 // NewAPIClient creates a new API client instance.
-func NewAPIClient(baseURL string, timeout time.Duration) *APIClient {
+func NewAPIClient(baseURL *string, timeout time.Duration) *APIClient {
 	return &APIClient{
-		baseURL: baseURL,
+		baseURL: *baseURL,
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
