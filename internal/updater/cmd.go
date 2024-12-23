@@ -2,7 +2,9 @@ package updater
 
 import (
 	"github.com/nikitamishagin/corebgp/internal/model"
+	"github.com/nikitamishagin/corebgp/pkg/client"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 // RootCmd initializes and returns the root command for the CoreBGP API server application.
@@ -12,8 +14,20 @@ func RootCmd() *cobra.Command {
 		Use:   "updater",
 		Short: "CoreBGP update controller",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			// Initialize the new GoBGP client
-			_, err := NewGoBGPClient(&config)
+			goBGPClient, err := NewGoBGPClient(&config)
+			if err != nil {
+				return err
+			}
+			defer goBGPClient.Close()
+
+			// Initialize the CoreBGP API client
+			apiClient := client.NewAPIClient(&config.APIEndpoint, time.Second*5)
+
+			// Check if CoreBGP API server is healthy
+			err = apiClient.V1HealthCheck(ctx)
 			if err != nil {
 				return err
 			}
