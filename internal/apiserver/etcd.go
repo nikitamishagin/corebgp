@@ -5,13 +5,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/nikitamishagin/corebgp/internal/model"
 	"go.etcd.io/etcd/client/v3"
 	"os"
 	"time"
 )
-
-var _ model.DatabaseAdapter = (*EtcdClient)(nil)
 
 type EtcdClient struct {
 	client *clientv3.Client
