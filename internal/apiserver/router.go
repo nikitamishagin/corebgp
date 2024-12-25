@@ -35,6 +35,30 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 
 	v1 := router.Group("/v1")
 
+	v1.GET("/announces/", func(c *gin.Context) {
+		prefix := "v1/announces/"
+
+		resp, err := db.List(prefix)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"announcements": resp})
+	})
+
+	v1.GET("/announces/:project/", func(c *gin.Context) {
+		project := c.Param("project")
+
+		prefix := "v1/announces/" + project + "/"
+
+		resp, err := db.List(prefix)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"announcements": resp})
+	})
+
 	v1.GET("/announces/:project/:name", func(c *gin.Context) {
 		// Extract params from path
 		project := c.Param("project")
