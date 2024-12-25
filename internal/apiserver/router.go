@@ -35,8 +35,8 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 
 	v1 := router.Group("/v1")
 
-	v1.GET("/announces/", func(c *gin.Context) {
-		prefix := "v1/announces/"
+	v1.GET("/announcements/", func(c *gin.Context) {
+		prefix := "v1/announcements/"
 
 		resp, err := db.List(prefix)
 		if err != nil {
@@ -46,10 +46,9 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"announcements": resp})
 	})
 
-	v1.GET("/announces/:project/", func(c *gin.Context) {
+	v1.GET("/announcements/:project/", func(c *gin.Context) {
 		project := c.Param("project")
-
-		prefix := "v1/announces/" + project + "/"
+		prefix := "v1/announcements/" + project + "/"
 
 		resp, err := db.List(prefix)
 		if err != nil {
@@ -59,13 +58,13 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"announcements": resp})
 	})
 
-	v1.GET("/announces/:project/:name", func(c *gin.Context) {
+	v1.GET("/announcements/:project/:name", func(c *gin.Context) {
 		// Extract params from path
 		project := c.Param("project")
 		name := c.Param("name")
 
 		// Create key for etcd data
-		key := "v1/announces/" + project + "/" + name
+		key := "v1/announcements/" + project + "/" + name
 
 		// Retrieve data from etcd
 		value, err := db.Get(key)
@@ -89,14 +88,14 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 	})
 
 	// Write routes
-	v1.POST("/announces/", func(c *gin.Context) {
+	v1.POST("/announcements/", func(c *gin.Context) {
 		var data model.Announcement
 		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		key := "v1/announces/" + data.Meta.Project + "/" + data.Meta.Name
+		key := "v1/announcements/" + data.Meta.Project + "/" + data.Meta.Name
 		_, err := db.Get(key)
 		if err == nil {
 			c.JSON(http.StatusConflict, gin.H{"error": "announcement already exists"})
@@ -113,7 +112,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			return
 		}
 
-		err = db.Put("v1/announces/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
+		err = db.Put("v1/announcements/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -121,14 +120,14 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		c.JSON(http.StatusCreated, gin.H{"message": "Announcement added successfully"})
 	})
 
-	v1.PATCH("/announces/", func(c *gin.Context) {
+	v1.PATCH("/announcements/", func(c *gin.Context) {
 		var data model.Announcement
 		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		key := "v1/announces/" + data.Meta.Project + "/" + data.Meta.Name
+		key := "v1/announcements/" + data.Meta.Project + "/" + data.Meta.Name
 		_, err := db.Get(key)
 		if err != nil && err.Error() == "key not found" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "announcement not found"})
@@ -144,7 +143,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		err = db.Put("v1/announces/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
+		err = db.Put("v1/announcements/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -159,8 +158,8 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		},
 	}
 
-	// Route for watching announces
-	v1.GET("/watch/announces/", func(c *gin.Context) {
+	// Route for watching announcements
+	v1.GET("/watch/announcements/", func(c *gin.Context) {
 		// Upgrade HTTP connection to WebSocket
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -172,8 +171,8 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		// Create a channel to stop the Watch
 		stopChan := make(chan struct{})
 
-		// Start watching keys with the prefix "/v1/announces/"
-		eventsChan, err := db.Watch("v1/announces/", stopChan)
+		// Start watching keys with the prefix "/v1/announcements/"
+		eventsChan, err := db.Watch("v1/announcements/", stopChan)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start watching"})
 			return
@@ -209,11 +208,11 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		}
 	})
 
-	v1.DELETE("/announces/:project/:name", func(c *gin.Context) {
+	v1.DELETE("/announcements/:project/:name", func(c *gin.Context) {
 		project := c.Param("project")
 		name := c.Param("name")
 
-		key := "v1/announces/" + project + "/" + name
+		key := "v1/announcements/" + project + "/" + name
 		_, err := db.Get(key)
 		if err != nil && err.Error() == "key not found" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "announcement not found"})
