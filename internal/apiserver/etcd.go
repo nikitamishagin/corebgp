@@ -17,8 +17,8 @@ type EtcdClient struct {
 	client *clientv3.Client
 }
 
-func NewEtcdClient(config *model.APIConfig) (*EtcdClient, error) {
-	caCert, err := os.ReadFile(config.Etcd.CACert)
+func NewEtcdClient(endpoints []string, caFile, certFile, keyFile string) (*EtcdClient, error) {
+	caCert, err := os.ReadFile(caFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read CA certificate: %w", err)
 	}
@@ -27,7 +27,7 @@ func NewEtcdClient(config *model.APIConfig) (*EtcdClient, error) {
 		return nil, fmt.Errorf("failed to append CA certificate")
 	}
 
-	cert, err := tls.LoadX509KeyPair(config.Etcd.ClientCert, config.Etcd.ClientKey)
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not load client certificate and key: %w", err)
 	}
@@ -38,7 +38,7 @@ func NewEtcdClient(config *model.APIConfig) (*EtcdClient, error) {
 	}
 
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   config.Endpoints,
+		Endpoints:   endpoints,
 		DialTimeout: 3 * time.Second,
 		TLS:         tlsConfig,
 	})
