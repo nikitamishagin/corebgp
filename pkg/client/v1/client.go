@@ -48,6 +48,118 @@ func (c *APIClient) V1HealthCheck(ctx context.Context) error {
 	return nil
 }
 
+// V1ListAnnouncements кeturns a list of announcement IDs from the API (globally).
+func (c *APIClient) V1ListAnnouncements(ctx context.Context) ([]string, error) {
+	url := fmt.Sprintf("%s/v1/announcements/", c.baseURL)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to list announcements: status code %d", resp.StatusCode)
+	}
+
+	var response struct {
+		Announcements []string `json:"announcements"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	return response.Announcements, nil
+}
+
+// V1ListAllAnnouncements returns a list of all announcements from the API (globally).
+func (c *APIClient) V1ListAllAnnouncements(ctx context.Context) ([]model.Announcement, error) {
+	url := fmt.Sprintf("%s/v1/announcements/all", c.baseURL)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to list all announcements: status code %d", resp.StatusCode)
+	}
+
+	var announcements []model.Announcement
+	if err := json.NewDecoder(resp.Body).Decode(&announcements); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	return announcements, nil
+}
+
+// V1ListProjectAnnouncements returns a list of announcement IDs from the API for the specified project.
+func (c *APIClient) V1ListProjectAnnouncements(ctx context.Context, project string) ([]string, error) {
+	url := fmt.Sprintf("%s/v1/announcements/%s/", c.baseURL, project)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to list announcements for project: status code %d", resp.StatusCode)
+	}
+
+	var response struct {
+		Announcements []string `json:"announcements"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	return response.Announcements, nil
+}
+
+// V1ListAllProjectAnnouncements returns a list of all announcements from the API for the specified project.
+func (c *APIClient) V1ListAllProjectAnnouncements(ctx context.Context, project string) ([]model.Announcement, error) {
+	url := fmt.Sprintf("%s/v1/announcements/%s/all", c.baseURL, project)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to list all announcements for project: status code %d", resp.StatusCode)
+	}
+
+	var announcements []model.Announcement
+	if err := json.NewDecoder(resp.Body).Decode(&announcements); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	return announcements, nil
+}
+
 // V1GetAnnouncement retrieves an announcement by project and name.
 func (c *APIClient) V1GetAnnouncement(ctx context.Context, project, name string) (*model.Announcement, error) {
 	url := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
