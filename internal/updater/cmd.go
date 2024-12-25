@@ -2,7 +2,7 @@ package updater
 
 import (
 	"github.com/nikitamishagin/corebgp/internal/model"
-	"github.com/nikitamishagin/corebgp/pkg/client"
+	"github.com/nikitamishagin/corebgp/pkg/client/v1"
 	"github.com/spf13/cobra"
 	"time"
 )
@@ -24,7 +24,7 @@ func RootCmd() *cobra.Command {
 			defer goBGPClient.Close()
 
 			// Initialize the CoreBGP API client
-			apiClient := client.NewAPIClient(&config.APIEndpoint, time.Second*5)
+			apiClient := v1.NewAPIClient(&config.APIEndpoint, time.Second*5)
 
 			// Check if CoreBGP API server is healthy
 			err = apiClient.V1HealthCheck(ctx)
