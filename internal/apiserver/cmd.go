@@ -58,7 +58,7 @@ func initializeDatabaseAdapter(config *model.APIConfig) (model.DatabaseAdapter, 
 	switch config.DBType {
 	case "etcd":
 		// Initialize Etcd adapter
-		etcdClient, err := NewEtcdClient(config)
+		etcdClient, err := NewEtcdClient(config.Endpoints, config.Etcd.CACert, config.Etcd.ClientCert, config.Etcd.ClientKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize etcd adapter: %w", err)
 		}
