@@ -95,6 +95,7 @@ func (e *EtcdClient) List(prefix string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get data from etcd: %w", err)
 	}
+
 	keys := make([]string, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
 		keys = append(keys, string(kv.Key))
