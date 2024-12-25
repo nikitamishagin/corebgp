@@ -103,6 +103,23 @@ func (e *EtcdClient) List(prefix string) ([]string, error) {
 	return keys, nil
 }
 
+func (e *EtcdClient) GetObjects(prefix string) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	resp, err := e.client.Get(ctx, prefix, clientv3.WithPrefix())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get data from etcd: %w", err)
+	}
+
+	values := make([]string, 0, len(resp.Kvs))
+	for _, kv := range resp.Kvs {
+		values = append(values, string(kv.Value))
+	}
+
+	return values, nil
+}
+
 func (e *EtcdClient) Delete(key string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
