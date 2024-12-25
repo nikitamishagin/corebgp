@@ -46,6 +46,29 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"announcements": resp})
 	})
 
+	v1.GET("/announcements/all", func(c *gin.Context) {
+		prefix := "v1/announcements/"
+
+		resp, err := db.GetObjects(prefix)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		announcementList := make([]model.Announcement, 0, len(resp))
+		for _, value := range resp {
+			var announcement model.Announcement
+			err = json.Unmarshal([]byte(value), &announcement)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unmarshal announcement"})
+				return
+			}
+			announcementList = append(announcementList, announcement)
+		}
+
+		c.JSON(http.StatusOK, announcementList)
+	})
+
 	v1.GET("/announcements/:project/", func(c *gin.Context) {
 		project := c.Param("project")
 		prefix := "v1/announcements/" + project + "/"
@@ -56,6 +79,30 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"announcements": resp})
+	})
+
+	v1.GET("/announcements/:project/all", func(c *gin.Context) {
+		project := c.Param("project")
+		prefix := "v1/announcements/" + project + "/"
+
+		resp, err := db.GetObjects(prefix)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		announcementList := make([]model.Announcement, 0, len(resp))
+		for _, value := range resp {
+			var announcement model.Announcement
+			err = json.Unmarshal([]byte(value), &announcement)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unmarshal announcement"})
+				return
+			}
+			announcementList = append(announcementList, announcement)
+		}
+
+		c.JSON(http.StatusOK, announcementList)
 	})
 
 	v1.GET("/announcements/:project/:name", func(c *gin.Context) {
