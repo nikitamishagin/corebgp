@@ -90,17 +90,19 @@ func (e *EtcdClient) Get(key string) (string, error) {
 	return value, nil
 }
 
-// TODO: Complete list methods
-
-func (e *EtcdClient) ListProjects() ([]string, error) {
+func (e *EtcdClient) List(prefix string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	resp, err := e.client.Get(ctx, "/projects", clientv3.WithPrefix())
+	resp, err := e.client.Get(ctx, prefix, clientv3.WithPrefix())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get data from etcd: %w", err)
 	}
-	return resp, nil
+	keys := make([]string, 0, len(resp.Kvs))
+	for _, kv := range resp.Kvs {
+		keys = append(keys, string(kv.Key))
+	}
+	return keys, nil
 }
 
 func (e *EtcdClient) Delete(key string) error {
