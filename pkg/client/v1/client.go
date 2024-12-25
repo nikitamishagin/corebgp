@@ -1,4 +1,4 @@
-package client
+package v1
 
 import (
 	"bytes"
@@ -50,7 +50,7 @@ func (c *APIClient) V1HealthCheck(ctx context.Context) error {
 
 // V1GetAnnouncement retrieves an announcement by project and name.
 func (c *APIClient) V1GetAnnouncement(ctx context.Context, project, name string) (*model.Announcement, error) {
-	url := fmt.Sprintf("%s/v1/announces/%s/%s", c.baseURL, project, name)
+	url := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
@@ -81,7 +81,7 @@ func (c *APIClient) V1GetAnnouncement(ctx context.Context, project, name string)
 
 // V1CreateAnnouncement creates a new announcement.
 func (c *APIClient) V1CreateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
-	url := c.baseURL + "/v1/announces/"
+	url := c.baseURL + "/v1/announcements/"
 
 	data, err := json.Marshal(announcement)
 	if err != nil {
@@ -114,7 +114,7 @@ func (c *APIClient) V1CreateAnnouncement(ctx context.Context, announcement *mode
 
 // V1UpdateAnnouncement updates an existing announcement.
 func (c *APIClient) V1UpdateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
-	url := c.baseURL + "/v1/announces/"
+	url := c.baseURL + "/v1/announcements/"
 
 	data, err := json.Marshal(announcement)
 	if err != nil {
@@ -147,7 +147,7 @@ func (c *APIClient) V1UpdateAnnouncement(ctx context.Context, announcement *mode
 
 // V1DeleteAnnouncement deletes an announcement by project and name.
 func (c *APIClient) V1DeleteAnnouncement(ctx context.Context, project, name string) error {
-	url := fmt.Sprintf("%s/v1/announces/%s/%s", c.baseURL, project, name)
+	url := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
 
 	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
 	if err != nil {
@@ -173,7 +173,7 @@ func (c *APIClient) V1DeleteAnnouncement(ctx context.Context, project, name stri
 
 // V1WatchAnnouncements establishes a WebSocket connection to watch announcements.
 func (c *APIClient) V1WatchAnnouncements(ctx context.Context, onEvent func(event map[string]interface{})) error {
-	url := fmt.Sprintf("ws://%s/v1/watch/announces/", c.baseURL)
+	url := fmt.Sprintf("ws://%s/v1/watch/announcements/", c.baseURL)
 
 	dialer := websocket.Dialer{}
 	conn, _, err := dialer.DialContext(ctx, url, nil)
