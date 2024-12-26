@@ -3,7 +3,6 @@ package updater
 import (
 	"context"
 	"fmt"
-	"github.com/nikitamishagin/corebgp/internal/model"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -19,8 +18,8 @@ type GoBGPClient struct {
 }
 
 // NewGoBGPClient initializes the new GoBGP client
-func NewGoBGPClient(config *model.UpdaterConfig) (*GoBGPClient, error) {
-	conn, err := grpc.Dial(config.GoBGPEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewGoBGPClient(endpoint string) (*GoBGPClient, error) {
+	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
