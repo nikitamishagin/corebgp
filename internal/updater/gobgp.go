@@ -90,3 +90,45 @@ func (g *GoBGPClient) AddPath(prefix string, prefixLength uint32, nextHop string
 
 	return nil
 }
+
+// DeletePath removes a specified BGP route (prefix) from GoBGP
+func (g *GoBGPClient) DeletePath(prefix string, prefixLength uint32, nextHop string) error {
+	// Create context with timeout for gRPC call
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Marshal the NLRI (route information) into *anypb.Any
+	nlri, err := anypb.New(&api.IPAddressPrefix{
+		Prefix:    prefix,
+		PrefixLen: prefixLength,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal NLRI for deletion: %w", err)
+	}
+
+	// Marshal the NextHop attribute into *anypb.Any (if required)
+	nextHopAttr, err := anypb.New(&api.NextHopAttribute{
+		NextHop: nextHop,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal next-hop attribute for deletion: %w", err)
+	}
+
+	// Construct the Path object with the NLRI and NextHop
+	path := &api.Path{
+		Nlri: nlri,
+		Pattrs: []*anypb.Any{
+			nextHopAttr,
+		},
+	}
+
+	// Call DeletePath API with the constructed path
+	_, err = g.client.DeletePath(ctx, &api.DeletePathRequest{
+		Path: path,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete path from GoBGP: %w", err)
+	}
+
+	return nil
+}
