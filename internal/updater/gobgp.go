@@ -39,26 +39,16 @@ func (g *GoBGPClient) Close() {
 	}
 }
 
-// TODO: AddAnnouncement needs to be completed
-
-// AddAnnouncement adds a BGP announcement based on the given Announcement structure.
-func (g *GoBGPClient) AddAnnouncement(announcement model.Announcement) error {
+// AddPath adds a specified BGP route (prefix) with associated attributes to the GoBGP server.
+func (g *GoBGPClient) AddPath(prefix string, prefixLength uint32, nextHop string) error {
 	// Generate the context for the gRPC call
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Validate the required fields before proceeding
-	if announcement.Addresses.AnnouncedIP == "" && announcement.Addresses.SourceSubnets.IP == "" {
-		return fmt.Errorf("necessarily one of the following fields must be set: announced_ip, source_subnets")
-	}
-	if len(announcement.NextHops) == 0 {
-		return fmt.Errorf("next_hops must be set")
-	}
-
-	// Marshal the IP prefix (NLRI) into *anypb.Any
+	// Marshal the NLRI (route information) into *anypb.Any
 	nlri, err := anypb.New(&api.IPAddressPrefix{
-		Prefix:    announcement.Addresses.AnnouncedIP,
-		PrefixLen: 32,
+		Prefix:    prefix,
+		PrefixLen: prefixLength,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal NLRI: %w", err)
@@ -69,14 +59,15 @@ func (g *GoBGPClient) AddAnnouncement(announcement model.Announcement) error {
 		Origin: 0, // IGP
 	})
 	if err != nil {
-		return fmt.Errorf("failed to marshal origin attribute: %w", err)
+		return fmt.Errorf("failed to marshal NLRI for deletion: %w", err)
 	}
 
+	// Marshal the NextHop attribute into *anypb.Any (if required)
 	nextHopAttr, err := anypb.New(&api.NextHopAttribute{
-		NextHop: announcement.NextHops[0].IP, // Use the first next-hop from the list
+		NextHop: nextHop,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to marshal next-hop attribute: %w", err)
+		return fmt.Errorf("failed to marshal next-hop attribute for deletion: %w", err)
 	}
 
 	// Construct the Path object
@@ -94,7 +85,7 @@ func (g *GoBGPClient) AddAnnouncement(announcement model.Announcement) error {
 		Path: path,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to add announcement: %w", err)
+		return fmt.Errorf("failed to add path to GoBGP: %w", err)
 	}
 
 	return nil
