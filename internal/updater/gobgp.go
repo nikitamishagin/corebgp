@@ -90,6 +90,44 @@ func (g *GoBGPClient) AddPath(prefix string, prefixLength uint32, nextHop string
 	return nil
 }
 
+// ListPath retrieves a list of BGP paths for the specified prefix from the GoBGP server. Returns a slice of paths or an error.
+func (g *GoBGPClient) ListPath(prefix string) ([]string, error) {
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Call ListPath API with a prefix filter
+	stream, err := g.client.ListPath(ctx, &api.ListPathRequest{
+		Family: &api.Family{
+			Afi:  api.Family_AFI_IP,
+			Safi: api.Family_SAFI_UNICAST,
+		},
+		Prefixes: []*api.TableLookupPrefix{
+			{
+				Prefix: prefix,
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list paths from GoBGP: %w", err)
+	}
+
+	// Collect paths from the stream
+	var paths []string
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			if err.Error() == "EOF" {
+				break
+			}
+			return nil, fmt.Errorf("error while receiving path from stream: %w", err)
+		}
+		paths = append(paths, resp.String())
+	}
+
+	return paths, nil
+}
+
 // DeletePath removes a specified BGP route (prefix) from GoBGP
 func (g *GoBGPClient) DeletePath(prefix string, prefixLength uint32, nextHop string) error {
 	// Create context with timeout for gRPC call
