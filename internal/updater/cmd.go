@@ -17,7 +17,7 @@ func RootCmd() *cobra.Command {
 			ctx := cmd.Context()
 
 			// Initialize the new GoBGP client
-			goBGPClient, err := NewGoBGPClient(&config)
+			goBGPClient, err := NewGoBGPClient(&config.GoBGPEndpoint)
 			if err != nil {
 				return err
 			}

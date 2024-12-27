@@ -18,8 +18,8 @@ type GoBGPClient struct {
 }
 
 // NewGoBGPClient initializes the new GoBGP client
-func NewGoBGPClient(endpoint string) (*GoBGPClient, error) {
-	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewGoBGPClient(endpoint *string) (*GoBGPClient, error) {
+	conn, err := grpc.Dial(*endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
