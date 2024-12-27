@@ -38,6 +38,18 @@ func (g *GoBGPClient) Close() {
 	}
 }
 
+// GetBGP retrieves the current BGP configuration from the GoBGP server and returns it as a string.
+func (g *GoBGPClient) GetBGP() (string, error) {
+	// Create a request to retrieve the current BGP configuration
+	bgpConfig, err := g.client.GetBgp(context.Background(), &api.GetBgpRequest{})
+	if err != nil {
+		return "", fmt.Errorf("failed to get BGP config: %w", err)
+	}
+
+	// Convert the BGP configuration to a string and return it
+	return bgpConfig.String(), nil
+}
+
 // AddPath adds a specified BGP route (prefix) with associated attributes to the GoBGP server.
 func (g *GoBGPClient) AddPath(prefix string, prefixLength uint32, nextHop string) error {
 	// Generate the context for the gRPC call
