@@ -30,6 +30,7 @@ func RootCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			defer databaseAdapter.Close()
 
 			// Start the API server
 			if err := NewAPIServer(databaseAdapter); err != nil {
