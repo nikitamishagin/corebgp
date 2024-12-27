@@ -9,6 +9,6 @@ import (
 func main() {
 	err := apiserver.RootCmd().Execute()
 	if err != nil {
-		log.Fatalf("Failed to run apiserver: %v", err)
+		log.Fatalf("failed to run apiserver: %v", err)
 	}
 }
