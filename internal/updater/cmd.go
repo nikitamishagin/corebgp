@@ -19,6 +19,7 @@ func RootCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Create a context with cancel function for managing the goroutines
 			ctx, cancel := context.WithCancel(cmd.Context())
+			defer cancel()
 
 			// Initialize the new GoBGP client
 			goBGPClient, err := NewGoBGPClient(&config.GoBGPEndpoint)
