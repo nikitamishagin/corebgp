@@ -22,7 +22,7 @@ func RootCmd() *cobra.Command {
 			defer cancel()
 
 			// Initialize the new GoBGP client
-			goBGPClient, err := NewGoBGPClient(&config.GoBGPEndpoint)
+			goBGPClient, err := NewGoBGPClient(&config.GoBGPEndpoint, &config.GoBGPCACert, &config.GoBGPClientCert, &config.GoBGPClientKey)
 			if err != nil {
 				return err
 			}
@@ -97,7 +97,7 @@ func RootCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&config.APIEndpoint, "api-endpoint", "http://localhost:8080", "URL of the API server")
-	cmd.Flags().StringVar(&config.GoBGPEndpoint, "gobgp-endpoint", "127.0.0.1:50051", "GoBGP gRPC endpoint")
+	cmd.Flags().StringVar(&config.GoBGPEndpoint, "gobgp-endpoint", "localhost:50051", "GoBGP gRPC endpoint")
 	cmd.Flags().StringVar(&config.GoBGPCACert, "gobgp-ca-cert", "", "Path to CA certificate")
 	cmd.Flags().StringVar(&config.GoBGPClientCert, "gobgp-client-cert", "", "Path to client certificate")
 	cmd.Flags().StringVar(&config.GoBGPClientKey, "gobgp-client-key", "", "Path to client key")

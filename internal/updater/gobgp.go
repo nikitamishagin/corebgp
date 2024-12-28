@@ -2,10 +2,13 @@ package updater
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/anypb"
+	"os"
 	"time"
 
 	api "github.com/osrg/gobgp/v3/api"
@@ -18,13 +21,36 @@ type GoBGPClient struct {
 }
 
 // NewGoBGPClient initializes the new GoBGP client
-func NewGoBGPClient(endpoint *string) (*GoBGPClient, error) {
-	conn, err := grpc.Dial(*endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewGoBGPClient(endpoint, caFile, certFile, keyFile *string) (*GoBGPClient, error) {
+	caCert, err := os.ReadFile(*caFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not read CA certificate: %w", err)
+	}
+	caPool := x509.NewCertPool()
+	if !caPool.AppendCertsFromPEM(caCert) {
+		return nil, fmt.Errorf("failed to append CA certificate")
+	}
+
+	cert, err := tls.LoadX509KeyPair(*certFile, *keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not load client certificate and key: %w", err)
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      caPool,
+	}
+
+	creds := credentials.NewTLS(tlsConfig)
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
+
+	conn, err := grpc.Dial(*endpoint, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to GoBGP server: %w", err)
 	}
 
 	client := api.NewGobgpApiClient(conn)
+
 	return &GoBGPClient{
 		client: client,
 		conn:   conn,
