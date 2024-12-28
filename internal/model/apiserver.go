@@ -1,5 +1,27 @@
 package model
 
+// EventType defines the type of event such as added, updated or deleted.
+type EventType string
+
+const (
+	EventAdded   EventType = "added"   // EventAdded represents the event type for adding a new announcement.
+	EventUpdated EventType = "updated" // EventUpdated represents the event type for updating an existing announcement.
+	EventDeleted EventType = "deleted" // EventDeleted represents the event type for deleting an existing announcement.
+)
+
+// Event represents a BGP announcement event, encapsulating the type of action and the specific announcement.
+type Event struct {
+	Type         EventType    `json:"type"`         // Action specifies the type of event: add, update, or delete.
+	Announcement Announcement `json:"announcement"` // Announcement is the BGP announcement data associated with the event.
+}
+
+// APIResponse represents a standard response structure for API calls.
+type APIResponse struct {
+	Status  string      `json:"status"`  // Status indicates the operation outcome: success or error.
+	Message string      `json:"message"` // Message provides additional details about the result of the API call.
+	Data    interface{} `json:"data"`    // Data contains the response payload, which can vary depending on the endpoint.
+}
+
 // Announcement represents a BGP routing configuration, including metadata, addresses, next-hop details, health checks, and status.
 type Announcement struct {
 	Meta        Meta        `json:"meta"`         // Meta represents metadata information including a descriptive name and associated project for a BGP announcement.
