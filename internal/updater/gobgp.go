@@ -33,9 +33,7 @@ func NewGoBGPClient(endpoint *string) (*GoBGPClient, error) {
 
 // Close closes GoBGP API server connection
 func (g *GoBGPClient) Close() {
-	if g.conn != nil {
-		g.conn.Close()
-	}
+	_ = g.conn.Close()
 }
 
 // GetBGP retrieves the current BGP configuration from the GoBGP server and returns it as a string.
