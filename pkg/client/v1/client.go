@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -50,9 +51,9 @@ func (c *APIClient) V1HealthCheck(ctx context.Context) error {
 
 // V1ListAnnouncements кeturns a list of announcement IDs from the API (globally).
 func (c *APIClient) V1ListAnnouncements(ctx context.Context) ([]string, error) {
-	url := fmt.Sprintf("%s/v1/announcements/", c.baseURL)
+	baseURL := fmt.Sprintf("%s/v1/announcements/", c.baseURL)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -79,9 +80,9 @@ func (c *APIClient) V1ListAnnouncements(ctx context.Context) ([]string, error) {
 
 // V1ListAllAnnouncements returns a list of all announcements from the API (globally).
 func (c *APIClient) V1ListAllAnnouncements(ctx context.Context) ([]model.Announcement, error) {
-	url := fmt.Sprintf("%s/v1/announcements/all", c.baseURL)
+	baseURL := fmt.Sprintf("%s/v1/announcements/all", c.baseURL)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -106,9 +107,9 @@ func (c *APIClient) V1ListAllAnnouncements(ctx context.Context) ([]model.Announc
 
 // V1ListProjectAnnouncements returns a list of announcement IDs from the API for the specified project.
 func (c *APIClient) V1ListProjectAnnouncements(ctx context.Context, project string) ([]string, error) {
-	url := fmt.Sprintf("%s/v1/announcements/%s/", c.baseURL, project)
+	baseURL := fmt.Sprintf("%s/v1/announcements/%s/", c.baseURL, project)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -135,9 +136,9 @@ func (c *APIClient) V1ListProjectAnnouncements(ctx context.Context, project stri
 
 // V1ListAllProjectAnnouncements returns a list of all announcements from the API for the specified project.
 func (c *APIClient) V1ListAllProjectAnnouncements(ctx context.Context, project string) ([]model.Announcement, error) {
-	url := fmt.Sprintf("%s/v1/announcements/%s/all", c.baseURL, project)
+	baseURL := fmt.Sprintf("%s/v1/announcements/%s/all", c.baseURL, project)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -162,9 +163,9 @@ func (c *APIClient) V1ListAllProjectAnnouncements(ctx context.Context, project s
 
 // V1GetAnnouncement retrieves an announcement by project and name.
 func (c *APIClient) V1GetAnnouncement(ctx context.Context, project, name string) (*model.Announcement, error) {
-	url := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
+	baseURL := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -193,14 +194,14 @@ func (c *APIClient) V1GetAnnouncement(ctx context.Context, project, name string)
 
 // V1CreateAnnouncement creates a new announcement.
 func (c *APIClient) V1CreateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
-	url := c.baseURL + "/v1/announcements/"
+	baseURL := c.baseURL + "/v1/announcements/"
 
 	data, err := json.Marshal(announcement)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, "POST", baseURL, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -226,14 +227,14 @@ func (c *APIClient) V1CreateAnnouncement(ctx context.Context, announcement *mode
 
 // V1UpdateAnnouncement updates an existing announcement.
 func (c *APIClient) V1UpdateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
-	url := c.baseURL + "/v1/announcements/"
+	baseURL := c.baseURL + "/v1/announcements/"
 
 	data, err := json.Marshal(announcement)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "PATCH", url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, "PATCH", baseURL, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -259,9 +260,9 @@ func (c *APIClient) V1UpdateAnnouncement(ctx context.Context, announcement *mode
 
 // V1DeleteAnnouncement deletes an announcement by project and name.
 func (c *APIClient) V1DeleteAnnouncement(ctx context.Context, project, name string) error {
-	url := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
+	baseURL := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
 
-	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", baseURL, nil)
 	if err != nil {
 		return err
 	}
@@ -285,12 +286,33 @@ func (c *APIClient) V1DeleteAnnouncement(ctx context.Context, project, name stri
 
 // V1WatchAnnouncements establishes a WebSocket connection to watch announcements.
 func (c *APIClient) V1WatchAnnouncements(ctx context.Context, onEvent func(event map[string]interface{})) error {
-	url := fmt.Sprintf("ws://%s/v1/watch/announcements/", c.baseURL)
 
-	dialer := websocket.Dialer{}
-	conn, _, err := dialer.DialContext(ctx, url, nil)
+	parsedURL, err := url.Parse(c.baseURL)
 	if err != nil {
-		return fmt.Errorf("failed to establish websocket connection: %v", err)
+		return fmt.Errorf("failed to parse base URL: %w", err)
+	}
+
+	// Replace 'http' with 'ws' and 'https' with 'wss'
+	switch parsedURL.Scheme {
+	case "http":
+		parsedURL.Scheme = "ws"
+	case "https":
+		parsedURL.Scheme = "wss"
+	default:
+		return fmt.Errorf("unsupported URL scheme: %s", parsedURL.Scheme)
+	}
+
+	// Append the path for WebSocket announcements
+	parsedURL.Path = "/v1/watch/announcements/"
+
+	// Build the WebSocket URL
+	webSocketURL := parsedURL.String()
+
+	// Initialize WebSocket connection
+	dialer := websocket.Dialer{}
+	conn, _, err := dialer.DialContext(ctx, webSocketURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to establish websocket connection: %w", err)
 	}
 	defer conn.Close()
 
