@@ -46,8 +46,8 @@ func NewEtcdClient(endpoints []string, caFile, certFile, keyFile string) (*EtcdC
 }
 
 // Close gracefully closes the underlying etcd client connection and releases associated resources.
-func (e *EtcdClient) Close() error {
-	return e.client.Close()
+func (e *EtcdClient) Close() {
+	_ = e.client.Close()
 }
 
 // HealthCheck verifies the health status of the etcd client by querying the status of the first endpoint.
