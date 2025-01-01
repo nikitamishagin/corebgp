@@ -1,54 +1,39 @@
 package updater
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/nikitamishagin/corebgp/internal/model"
+)
 
-func handleAnnouncementEvent(client *GoBGPClient, event map[string]interface{}) error {
-	// Ensure the event has a recognized format and type
-	action, ok := event["action"].(string)
-	if !ok {
-		return fmt.Errorf("event is missing required 'action' field")
-	}
-
-	// Parse the prefix and prefix length
-	prefix, ok := event["prefix"].(string)
-	if !ok {
-		return fmt.Errorf("event is missing 'prefix' field")
-	}
-	prefixLengthFloat, ok := event["prefix_length"].(float64) // JSON unmarshals numbers to float64
-	if !ok {
-		return fmt.Errorf("event is missing 'prefix_length' field")
-	}
-	prefixLength := uint32(prefixLengthFloat)
-	nextHop, ok := event["nexthop"].(string)
-	if !ok {
-		return fmt.Errorf("event is missing 'nexthop' field")
-	}
-
+func handleAnnouncementEvent(client *GoBGPClient, event *model.Event) error {
 	// Log the event being processed
-	fmt.Printf("Processing event: action=%s, prefix=%s/%d\n", action, prefix, prefixLength)
+	fmt.Printf("Processing event: type=%s, address=%s, next-hops=%v\n", event.Type, event.Announcement.Addresses.AnnouncedIP, event.Announcement.NextHops)
 
-	// Handle actions: "add", "update", and "delete"
-	switch action {
-	case "add":
-		err := client.AddPath(prefix, prefixLength, nextHop)
+	// Handle the event based on the Type
+	switch event.Type {
+	case model.EventAdded:
+		// Add route (only one next hop for test)
+		err := client.AddPath(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops[0].IP)
 		if err != nil {
-			return fmt.Errorf("failed to add route %s/%d: %w", prefix, prefixLength, err)
+			return fmt.Errorf("failed to add route %s via %v: %w", event.Announcement.Addresses.AnnouncedIP, event.Announcement.NextHops, err)
 		}
-	// TODO: Implement update route
-	//case "update":
-	//	err := client.UpdatePath(prefix, prefixLength)
+	//case model.EventUpdated:
+	//	// Update announcement (update route)
+	//	err := client.UpdatePath(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops[0].IP)
 	//	if err != nil {
-	//		return fmt.Errorf("failed to update route %s/%d: %w", prefix, prefixLength, err)
+	//		return fmt.Errorf("failed to update route %s/%d: %w",
+	//			event.Announcement.Addresses.AnnouncedIP, 32, err)
 	//	}
-
-	case "delete":
-		err := client.DeletePath(prefix, prefixLength, nextHop)
+	case model.EventDeleted:
+		// Delete announcement (remove route)
+		err := client.DeletePath(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops[0].IP)
 		if err != nil {
-			return fmt.Errorf("failed to delete route %s/%d: %w", prefix, prefixLength, err)
+			return fmt.Errorf("failed to delete route %s/%d: %w",
+				event.Announcement.Addresses.AnnouncedIP, 32, err)
 		}
-
 	default:
-		return fmt.Errorf("unrecognized action: %s", action)
+		// Unrecognized event type
+		return fmt.Errorf("unrecognized event type: %s", event.Type)
 	}
 
 	return nil

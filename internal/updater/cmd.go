@@ -34,6 +34,8 @@ func RootCmd() *cobra.Command {
 				return err
 			}
 
+			// TODO: Implement reconnection
+
 			// Initialize the CoreBGP API client
 			apiClient := v1.NewAPIClient(&config.APIEndpoint, time.Second*5)
 
@@ -43,10 +45,8 @@ func RootCmd() *cobra.Command {
 				return err
 			}
 
-			// TODO: Check event type
-
 			// Create a channel to process events
-			events := make(chan map[string]interface{}, 100) // Buffered channel to handle bursts of events
+			events := make(chan model.Event, 100) // Buffered channel to handle bursts of events
 			defer close(events)
 
 			// Create a WaitGroup to manage goroutines
@@ -58,7 +58,7 @@ func RootCmd() *cobra.Command {
 				defer wg.Done() // Decrement the WaitGroup counter when the goroutine ends
 
 				fmt.Println("Starting to watch announcements...")
-				err := apiClient.V1WatchAnnouncements(ctx, func(event map[string]interface{}) {
+				err := apiClient.V1WatchAnnouncements(ctx, func(event model.Event) {
 					// Push each incoming event into the channel
 					events <- event
 				})
@@ -74,8 +74,8 @@ func RootCmd() *cobra.Command {
 				defer wg.Done() // Ensure the WaitGroup counter is decremented after processing ends
 				for event := range events {
 					// Handle each event in a separate goroutine
-					go func(evt map[string]interface{}) {
-						if err := handleAnnouncementEvent(goBGPClient, evt); err != nil {
+					go func(ev model.Event) {
+						if err := handleAnnouncementEvent(goBGPClient, &ev); err != nil {
 							fmt.Printf("Failed to process event: %v\n", err)
 						}
 					}(event)
