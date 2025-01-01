@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/nikitamishagin/corebgp/internal/model"
+	"go.etcd.io/etcd/client/v3"
 	"net/http"
 )
 
@@ -363,19 +364,40 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			}
 		}()
 
-		// TODO: Fix method
+		// TODO: Fix deleting method for preview value
 
 		// Read changes from events and send them to the client
 		for watchResp := range eventsChan {
-			for _, event := range watchResp.Events {
-				// Event structure to be transmitted
-				watchEvent := model.Event{
-					Type:         watchResp.Events,
-					Announcement: model.Announcement{},
+			for _, watchEvent := range watchResp.Events {
+				var eventResp model.Event
+
+				switch watchEvent.Type {
+				case clientv3.EventTypePut:
+					if watchEvent.IsCreate() {
+						eventResp.Type = model.EventAdded
+					} else {
+						eventResp.Type = model.EventUpdated
+					}
+
+					err := json.Unmarshal(watchEvent.Kv.Value, &eventResp.Announcement)
+					if err != nil {
+						fmt.Printf("failed to unmarshal announcement: %v\n", err)
+						continue
+					}
+				case clientv3.EventTypeDelete:
+					eventResp.Type = model.EventDeleted
+
+					if watchEvent.PrevKv == nil {
+						err := json.Unmarshal(watchEvent.PrevKv.Value, &eventResp.Announcement)
+						if err != nil {
+							fmt.Printf("failed to unmarshal announcement: %v\n", err)
+							continue
+						}
+					}
 				}
 
-				// Send the event to the client via WebSocket
-				if err := conn.WriteJSON(watchEvent); err != nil {
+				// Send the eventResp to the client via WebSocket
+				if err := conn.WriteJSON(eventResp); err != nil {
 					return
 				}
 			}

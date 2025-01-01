@@ -166,5 +166,5 @@ func (e *EtcdClient) Watch(key string, stopChan <-chan struct{}) (<-chan clientv
 
 	// Start watching the specified key with a prefix
 	// The returned channel streams events; the caller is responsible for processing them
-	return e.client.Watch(ctx, key, clientv3.WithPrefix()), nil
+	return e.client.Watch(ctx, key, clientv3.WithPrefix(), clientv3.WithPrevKV()), nil
 }
