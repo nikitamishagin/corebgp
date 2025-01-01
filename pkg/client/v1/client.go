@@ -285,7 +285,7 @@ func (c *APIClient) V1DeleteAnnouncement(ctx context.Context, project, name stri
 }
 
 // V1WatchAnnouncements establishes a WebSocket connection to watch announcements.
-func (c *APIClient) V1WatchAnnouncements(ctx context.Context, onEvent func(event map[string]interface{})) error {
+func (c *APIClient) V1WatchAnnouncements(ctx context.Context, onEvent func(event model.Event)) error {
 
 	parsedURL, err := url.Parse(c.baseURL)
 	if err != nil {
@@ -327,7 +327,7 @@ func (c *APIClient) V1WatchAnnouncements(ctx context.Context, onEvent func(event
 				return
 			}
 
-			var event map[string]interface{}
+			var event model.Event
 			if err := json.Unmarshal(message, &event); err != nil {
 				fmt.Printf("failed to unmarshal websocket message: %v\n", err)
 				continue
