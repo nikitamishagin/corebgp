@@ -48,6 +48,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		c.JSON(http.StatusOK, model.APIResponse{
 			Status:  "success",
 			Message: "Announcements retrieved successfully",
@@ -103,6 +104,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		c.JSON(http.StatusOK, model.APIResponse{
 			Status:  "success",
 			Message: "Announcements retrieved successfully",
@@ -164,6 +166,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, model.APIResponse{
 				Status:  "error",
@@ -213,6 +216,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		if err != nil && err.Error() != "key not found" {
 			c.JSON(http.StatusInternalServerError, model.APIResponse{
 				Status:  "error",
@@ -241,6 +245,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		c.JSON(http.StatusCreated, model.APIResponse{
 			Status:  "success",
 			Message: "Announcement created successfully",
@@ -272,6 +277,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, model.APIResponse{
 				Status:  "error",
@@ -299,6 +305,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		c.JSON(http.StatusOK, model.APIResponse{
 			Status:  "success",
 			Message: "Announcement patched successfully",
@@ -389,6 +396,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, model.APIResponse{
 				Status:  "error",
@@ -396,6 +404,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 				Data:    nil,
 			})
 		}
+
 		err = db.Delete(key)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, model.APIResponse{
@@ -405,6 +414,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			})
 			return
 		}
+
 		c.JSON(http.StatusOK, model.APIResponse{
 			Status:  "success",
 			Message: "Announcement deleted successfully",
