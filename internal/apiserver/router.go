@@ -364,8 +364,6 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 			}
 		}()
 
-		// TODO: Fix deleting method for preview value
-
 		// Read changes from events and send them to the client
 		for watchResp := range eventsChan {
 			for _, watchEvent := range watchResp.Events {
@@ -387,7 +385,7 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 				case clientv3.EventTypeDelete:
 					eventResp.Type = model.EventDeleted
 
-					if watchEvent.PrevKv == nil {
+					if watchEvent.PrevKv != nil {
 						err := json.Unmarshal(watchEvent.PrevKv.Value, &eventResp.Announcement)
 						if err != nil {
 							fmt.Printf("failed to unmarshal announcement: %v\n", err)
