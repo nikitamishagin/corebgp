@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// RootCmd initializes and returns the root command for the CoreBGP API server application.
+// RootCmd initializes and returns the root command for the CoreBGP Updater application.
 func RootCmd() *cobra.Command {
 	var config model.UpdaterConfig
 	var cmd = &cobra.Command{
