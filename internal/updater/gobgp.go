@@ -190,6 +190,10 @@ func (g *GoBGPClient) DeletePath(prefix string, prefixLength uint32, nextHop str
 	// Construct the Path object with the NLRI and NextHop
 	path := &api.Path{
 		Nlri: nlri,
+		Family: &api.Family{
+			Afi:  api.Family_AFI_IP,
+			Safi: api.Family_SAFI_UNICAST,
+		},
 		Pattrs: []*anypb.Any{
 			nextHopAttr,
 		},
