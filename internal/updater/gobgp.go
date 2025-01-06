@@ -94,7 +94,7 @@ func (g *GoBGPClient) AddPath(prefix string, prefixLength uint32, nextHop string
 		Origin: 0, // IGP
 	})
 	if err != nil {
-		return fmt.Errorf("failed to marshal NLRI for deletion: %w", err)
+		return fmt.Errorf("failed to marshal origin attribute: %w", err)
 	}
 
 	// Marshal the NextHop attribute into *anypb.Any (if required)
@@ -102,7 +102,7 @@ func (g *GoBGPClient) AddPath(prefix string, prefixLength uint32, nextHop string
 		NextHop: nextHop,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to marshal next-hop attribute for deletion: %w", err)
+		return fmt.Errorf("failed to marshal next-hop attribute: %w", err)
 	}
 
 	// Construct the Path object
