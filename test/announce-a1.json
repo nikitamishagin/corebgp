@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "name": "example_1",
+    "project": "project_a"
+  },
+  "addresses": {
+    "source-subnets": {
+      "ip": "192.168.1.0",
+      "mask": 24
+    },
+    "zone": "us-east-1",
+    "announced-ip": "192.168.1.1"
+  },
+  "next-hops": [
+    "192.168.2.1",
+    "192.168.3.1"
+  ],
+  "health-check": {
+    "path": "/health",
+    "port": 8080,
+    "method": "GET",
+    "interval": 30,
+    "timeout": 5,
+    "grace-period": 120
+  },
+  "status": {
+    "status": "Active",
+    "details": [
+      {
+        "host": "192.168.2.1",
+        "status": "Healthy",
+        "code": 200,
+        "msg": "Health check successful",
+        "timestamp": "2023-10-15T12:00:00Z"
+      },
+      {
+        "host": "192.168.3.1",
+        "status": "Unhealthy",
+        "code": 500,
+        "msg": "Health check failed",
+        "timestamp": "2023-10-15T12:01:00Z"
+      }
+    ],
+    "timestamp": "2023-10-15T12:02:00Z"
+  }
+}
