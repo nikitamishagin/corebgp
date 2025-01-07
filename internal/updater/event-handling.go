@@ -25,8 +25,8 @@ func handleAnnouncementEvent(client *GoBGPClient, event *model.Event) error {
 				event.Announcement.Addresses.AnnouncedIP, 32, err)
 		}
 	case model.EventDeleted:
-		// Delete announcement (remove route)
-		err := client.DeletePath(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops[0].IP)
+		// Delete routes
+		err := client.DeletePath(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops)
 		if err != nil {
 			return fmt.Errorf("failed to delete route %s/%d: %w",
 				event.Announcement.Addresses.AnnouncedIP, 32, err)
