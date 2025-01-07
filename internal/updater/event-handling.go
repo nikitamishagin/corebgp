@@ -18,8 +18,8 @@ func handleAnnouncementEvent(client *GoBGPClient, event *model.Event) error {
 			return fmt.Errorf("failed to add route %s via %v: %w", event.Announcement.Addresses.AnnouncedIP, event.Announcement.NextHops, err)
 		}
 	case model.EventUpdated:
-		// Update announcement (update route)
-		err := client.UpdatePath(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops[0].IP)
+		// Update routes
+		err := client.UpdatePath(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops)
 		if err != nil {
 			return fmt.Errorf("failed to update route %s/%d: %w",
 				event.Announcement.Addresses.AnnouncedIP, 32, err)
