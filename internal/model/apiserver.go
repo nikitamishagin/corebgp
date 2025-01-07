@@ -26,7 +26,7 @@ type APIResponse struct {
 type Announcement struct {
 	Meta        Meta        `json:"meta"`         // Meta represents metadata information including a descriptive name and associated project for a BGP announcement.
 	Addresses   Addresses   `json:"addresses"`    // Addresses represents a collection of network-related data, including subnets, zone, and announcing ip.
-	NextHops    []Subnet    `json:"next-hops"`    // NextHops represents a collection of next-hop IP addresses used for routing purposes.
+	NextHops    []string    `json:"next-hops"`    // NextHops represents a collection of next-hop IP addresses used for routing purposes.
 	HealthCheck HealthCheck `json:"health-check"` // HealthCheck represents the configuration and parameters for performing health checks on next hops.
 	Status      Status      `json:"status"`       // Status represents the current state of an announcement with details and a timestamp.
 }
@@ -39,9 +39,9 @@ type Meta struct {
 
 // Addresses represents a collection of network-related data, including subnets, zone, and announcing ip.
 type Addresses struct {
-	SourceSubnets Subnet `json:"announced-address"` // SourceSubnets specifies the subnet from which the announced address should be obtained (IPAM).
-	Zone          string `json:"zone"`              // Zone specifies the geographical or logical zone associated with the addresses.
-	AnnouncedIP   string `json:"announced-ip"`      // AnnouncedIP specifies the IP address being announced for routing purposes.
+	SourceSubnets Subnet `json:"source-subnets"` // SourceSubnets specifies the subnet from which the announced address should be obtained (IPAM).
+	Zone          string `json:"zone"`           // Zone specifies the geographical or logical zone associated with the addresses.
+	AnnouncedIP   string `json:"announced-ip"`   // AnnouncedIP specifies the IP address being announced for routing purposes.
 }
 
 // Subnet represents a network subnet with an IP address and subnet mask.
