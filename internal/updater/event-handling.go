@@ -12,8 +12,8 @@ func handleAnnouncementEvent(client *GoBGPClient, event *model.Event) error {
 	// Handle the event based on the Type
 	switch event.Type {
 	case model.EventAdded:
-		// Add route (only one next hop for test)
-		err := client.AddPath(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops[0].IP)
+		// Add routes
+		err := client.AddPaths(event.Announcement.Addresses.AnnouncedIP, 32, event.Announcement.NextHops)
 		if err != nil {
 			return fmt.Errorf("failed to add route %s via %v: %w", event.Announcement.Addresses.AnnouncedIP, event.Announcement.NextHops, err)
 		}
