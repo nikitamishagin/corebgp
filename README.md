@@ -20,11 +20,11 @@ with BGP.
 
 The project is composed of several modules (microservices):
 
-- etcd (support for other databases is planned in the future);
+- [etcd](https://github.com/etcd-io/etcd) (support for other databases is planned in the future);
 - API server;
+- Checker;
 - Updater;
-- GoBGP;
-- Checker (multiple implementations are possible);
+- [GoBGP](https://github.com/osrg/gobgp);
 - IPAM plugin (optional component).
 
 ### ETCD
