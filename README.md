@@ -81,4 +81,10 @@ Each instance of the component interacts with its own API server running on the 
 GoBGP is the core component that acts as a BGP controller. It is expected to act as a route reflector and distribute
 information about advertised routes in the BGP network.
 
+### IPAM plugin
+
+This is an optional component that can be implemented to integrate with a specific IPAM system. Integration with an
+external IPAM will eliminate the need to pass a specific address along with the announcement, which will simplify the
+work with announcements for services (for example, addresses used for BGP load balancing).
+
 _readme in progress..._
