@@ -68,4 +68,12 @@ components.
 
 Each instance of the component interacts with its own API server running on the same node.
 
+### Updater
+
+Updater configures a subordinate instance of GoBGP through its gRPC API based on data retrieved from the API server.
+Essentially, it is responsible for maintaining the relevance of BGP routes and ensuring the restoration of the routing
+table after failures.
+
+Each instance of the component interacts with its own API server running on the same node.
+
 _readme in progress..._
