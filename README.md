@@ -47,4 +47,8 @@ the following reasons:
 
 ### API server
 
+API server is a key component of the project that serves as a RESTful API with integration to ETCD. It provides a
+unified interface for interacting with various clients. Access control implementation is planned for the future.
+[The Gin framework](https://github.com/gin-gonic/gin) is used for development.
+
 _readme in progress..._
