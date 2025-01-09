@@ -51,4 +51,21 @@ API server is a key component of the project that serves as a RESTful API with i
 unified interface for interacting with various clients. Access control implementation is planned for the future.
 [The Gin framework](https://github.com/gin-gonic/gin) is used for development.
 
+### Checker
+
+Checker is a component responsible for performing health checks for next hops provided in the announcement. Based on its
+results, decisions are made about adding or removing routes.
+
+A potential challenge is implementing complex logic for operating in a high availability configuration, which should:
+
+- Prevent simultaneous execution of the same task by multiple instances.
+- Ensure an even distribution of tasks among instances.
+- Minimize the execution of tasks by instances in other zones to reduce inter-zone traffic.
+- Guarantee the execution of all tasks in case one or more instances fail.
+
+At the same time, it is important to maintain simplicity in implementation without using additional services or
+components.  
+
+Each instance of the component interacts with its own API server running on the same node.
+
 _readme in progress..._
