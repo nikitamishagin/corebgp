@@ -64,7 +64,7 @@ A potential challenge is implementing complex logic for operating in a high avai
 - Guarantee the execution of all tasks in case one or more instances fail.
 
 At the same time, it is important to maintain simplicity in implementation without using additional services or
-components.  
+components.
 
 Each instance of the component interacts with its own API server running on the same node.
 
@@ -75,5 +75,10 @@ Essentially, it is responsible for maintaining the relevance of BGP routes and e
 table after failures.
 
 Each instance of the component interacts with its own API server running on the same node.
+
+### GoBGP
+
+GoBGP is the core component that acts as a BGP controller. It is expected to act as a route reflector and distribute
+information about advertised routes in the BGP network.
 
 _readme in progress..._
