@@ -23,7 +23,7 @@ func NewHandler(db model.DatabaseAdapter) *Handler {
 func (h *Handler) ListAnnouncements(c *gin.Context) {
 	prefix := "v1/announcements/"
 
-	data, err := h.DB.List(prefix)
+	announcementList, err := h.DB.List(prefix)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.APIResponse{
 			Status:  "error",
@@ -36,7 +36,7 @@ func (h *Handler) ListAnnouncements(c *gin.Context) {
 	c.JSON(http.StatusOK, model.APIResponse{
 		Status:  "success",
 		Message: "Announcements retrieved successfully",
-		Data:    data,
+		Data:    announcementList,
 	})
 }
 
@@ -53,7 +53,7 @@ func (h *Handler) GetAnnouncements(c *gin.Context) {
 		return
 	}
 
-	announcementList := make([]model.Announcement, 0, len(data))
+	announcements := make([]model.Announcement, 0, len(data))
 	for _, value := range data {
 		var announcement model.Announcement
 		err = json.Unmarshal([]byte(value), &announcement)
@@ -65,13 +65,13 @@ func (h *Handler) GetAnnouncements(c *gin.Context) {
 			})
 			return
 		}
-		announcementList = append(announcementList, announcement)
+		announcements = append(announcements, announcement)
 	}
 
 	c.JSON(http.StatusOK, model.APIResponse{
 		Status:  "success",
 		Message: "Announcements retrieved successfully",
-		Data:    announcementList,
+		Data:    announcements,
 	})
 }
 
@@ -79,7 +79,7 @@ func (h *Handler) ListAnnouncementsByProject(c *gin.Context) {
 	project := c.Param("project")
 	prefix := "v1/announcements/" + project + "/"
 
-	data, err := h.DB.List(prefix)
+	announcementList, err := h.DB.List(prefix)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.APIResponse{
 			Status:  "error",
@@ -92,7 +92,7 @@ func (h *Handler) ListAnnouncementsByProject(c *gin.Context) {
 	c.JSON(http.StatusOK, model.APIResponse{
 		Status:  "success",
 		Message: "Announcements retrieved successfully",
-		Data:    data,
+		Data:    announcementList,
 	})
 }
 
@@ -110,7 +110,7 @@ func (h *Handler) GetAnnouncementsByProject(c *gin.Context) {
 		return
 	}
 
-	announcementList := make([]model.Announcement, 0, len(data))
+	announcements := make([]model.Announcement, 0, len(data))
 	for _, value := range data {
 		var announcement model.Announcement
 		err = json.Unmarshal([]byte(value), &announcement)
@@ -122,13 +122,13 @@ func (h *Handler) GetAnnouncementsByProject(c *gin.Context) {
 			})
 			return
 		}
-		announcementList = append(announcementList, announcement)
+		announcements = append(announcements, announcement)
 	}
 
 	c.JSON(http.StatusOK, model.APIResponse{
 		Status:  "success",
 		Message: "Announcements retrieved successfully",
-		Data:    announcementList,
+		Data:    announcements,
 	})
 }
 
@@ -137,11 +137,9 @@ func (h *Handler) GetAnnouncement(c *gin.Context) {
 	project := c.Param("project")
 	name := c.Param("name")
 
-	// Create key for etcd data
-	key := "v1/announcements/" + project + "/" + name
+	prefix := "v1/announcements/" + project + "/" + name
 
-	// Retrieve data from etcd
-	value, err := h.DB.Get(key)
+	data, err := h.DB.Get(prefix)
 	if err != nil && err.Error() == "key not found" {
 		c.JSON(http.StatusNotFound, model.APIResponse{
 			Status:  "error",
@@ -161,7 +159,7 @@ func (h *Handler) GetAnnouncement(c *gin.Context) {
 	}
 
 	var announcement model.Announcement
-	err = json.Unmarshal([]byte(value), &announcement)
+	err = json.Unmarshal([]byte(data), &announcement)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.APIResponse{
 			Status:  "error",
@@ -179,8 +177,8 @@ func (h *Handler) GetAnnouncement(c *gin.Context) {
 }
 
 func (h *Handler) PostAnnouncement(c *gin.Context) {
-	var data model.Announcement
-	if err := c.ShouldBindJSON(&data); err != nil {
+	var announcement model.Announcement
+	if err := c.ShouldBindJSON(&announcement); err != nil {
 		c.JSON(http.StatusBadRequest, model.APIResponse{
 			Status:  "error",
 			Message: err.Error(),
@@ -189,8 +187,8 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 		return
 	}
 
-	key := "v1/announcements/" + data.Meta.Project + "/" + data.Meta.Name
-	_, err := h.DB.Get(key)
+	prefix := "v1/announcements/" + announcement.Meta.Project + "/" + announcement.Meta.Name
+	_, err := h.DB.Get(prefix)
 	if err == nil {
 		c.JSON(http.StatusConflict, model.APIResponse{
 			Status:  "error",
@@ -208,7 +206,7 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 		return
 	}
 
-	value, err := json.Marshal(data)
+	data, err := json.Marshal(announcement)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.APIResponse{
 			Status:  "error",
@@ -218,7 +216,7 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 		return
 	}
 
-	err = h.DB.Put("v1/announcements/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
+	err = h.DB.Put(prefix, string(data))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.APIResponse{
 			Status:  "error",
@@ -233,14 +231,14 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 		Message: "Announcement created successfully",
 		Data: model.Event{
 			Type:         model.EventAdded,
-			Announcement: data,
+			Announcement: announcement,
 		},
 	})
 }
 
 func (h *Handler) PatchAnnouncements(c *gin.Context) {
-	var data model.Announcement
-	if err := c.ShouldBindJSON(&data); err != nil {
+	var announcement model.Announcement
+	if err := c.ShouldBindJSON(&announcement); err != nil {
 		c.JSON(http.StatusBadRequest, model.APIResponse{
 			Status:  "error",
 			Message: err.Error(),
@@ -249,8 +247,8 @@ func (h *Handler) PatchAnnouncements(c *gin.Context) {
 		return
 	}
 
-	key := "v1/announcements/" + data.Meta.Project + "/" + data.Meta.Name
-	_, err := h.DB.Get(key)
+	prefix := "v1/announcements/" + announcement.Meta.Project + "/" + announcement.Meta.Name
+	_, err := h.DB.Get(prefix)
 	if err != nil && err.Error() == "key not found" {
 		c.JSON(http.StatusNotFound, model.APIResponse{
 			Status:  "error",
@@ -269,7 +267,7 @@ func (h *Handler) PatchAnnouncements(c *gin.Context) {
 		return
 	}
 
-	value, err := json.Marshal(data)
+	data, err := json.Marshal(announcement)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.APIResponse{
 			Status:  "error",
@@ -278,7 +276,7 @@ func (h *Handler) PatchAnnouncements(c *gin.Context) {
 		})
 	}
 
-	err = h.DB.Put("v1/announcements/"+data.Meta.Project+"/"+data.Meta.Name, string(value))
+	err = h.DB.Put(prefix, string(data))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.APIResponse{
 			Status:  "error",
@@ -293,7 +291,7 @@ func (h *Handler) PatchAnnouncements(c *gin.Context) {
 		Message: "Announcement patched successfully",
 		Data: model.Event{
 			Type:         model.EventUpdated,
-			Announcement: data,
+			Announcement: announcement,
 		},
 	})
 }
@@ -386,8 +384,8 @@ func (h *Handler) DeleteAnnouncement(c *gin.Context) {
 	project := c.Param("project")
 	name := c.Param("name")
 
-	key := "v1/announcements/" + project + "/" + name
-	_, err := h.DB.Get(key)
+	prefix := "v1/announcements/" + project + "/" + name
+	_, err := h.DB.Get(prefix)
 	if err != nil && err.Error() == "key not found" {
 		c.JSON(http.StatusNotFound, model.APIResponse{
 			Status:  "error",
@@ -405,7 +403,7 @@ func (h *Handler) DeleteAnnouncement(c *gin.Context) {
 		})
 	}
 
-	err = h.DB.Delete(key)
+	err = h.DB.Delete(prefix)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.APIResponse{
 			Status:  "error",
