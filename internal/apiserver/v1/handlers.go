@@ -10,16 +10,19 @@ import (
 	"net/http"
 )
 
+// Handler provides methods to manage and interact with a database using a DatabaseAdapter.
 type Handler struct {
 	DB model.DatabaseAdapter
 }
 
+// NewHandler initializes a new Handler instance with the provided DatabaseAdapter for interacting with the database.
 func NewHandler(db model.DatabaseAdapter) *Handler {
 	return &Handler{
 		DB: db,
 	}
 }
 
+// ListAnnouncements retrieves a list of all announcements by querying the database with a predefined prefix.
 func (h *Handler) ListAnnouncements(c *gin.Context) {
 	prefix := "v1/announcements/"
 
@@ -40,6 +43,7 @@ func (h *Handler) ListAnnouncements(c *gin.Context) {
 	})
 }
 
+// GetAnnouncements retrieves all announcements from the database, deserializing them into structured data.
 func (h *Handler) GetAnnouncements(c *gin.Context) {
 	prefix := "v1/announcements/"
 
@@ -75,7 +79,9 @@ func (h *Handler) GetAnnouncements(c *gin.Context) {
 	})
 }
 
+// ListAnnouncementsByProject retrieves a list of announcements for a specified project by querying the database.
 func (h *Handler) ListAnnouncementsByProject(c *gin.Context) {
+	// Extract params from path
 	project := c.Param("project")
 	prefix := "v1/announcements/" + project + "/"
 
@@ -96,7 +102,9 @@ func (h *Handler) ListAnnouncementsByProject(c *gin.Context) {
 	})
 }
 
+// GetAnnouncementsByProject retrieves a list of announcements for a specified project by querying the database.
 func (h *Handler) GetAnnouncementsByProject(c *gin.Context) {
+	// Extract params from path
 	project := c.Param("project")
 	prefix := "v1/announcements/" + project + "/"
 
@@ -132,6 +140,7 @@ func (h *Handler) GetAnnouncementsByProject(c *gin.Context) {
 	})
 }
 
+// GetAnnouncement retrieves a specific announcement based on the project and name parameters from the database.
 func (h *Handler) GetAnnouncement(c *gin.Context) {
 	// Extract params from path
 	project := c.Param("project")
@@ -176,6 +185,7 @@ func (h *Handler) GetAnnouncement(c *gin.Context) {
 	})
 }
 
+// PostAnnouncement creates a new announcement by accepting JSON data, validating it, and storing it in the database.
 func (h *Handler) PostAnnouncement(c *gin.Context) {
 	var announcement model.Announcement
 	if err := c.ShouldBindJSON(&announcement); err != nil {
@@ -236,6 +246,7 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 	})
 }
 
+// PatchAnnouncements updates an existing announcement in the database based on provided JSON data.
 func (h *Handler) PatchAnnouncements(c *gin.Context) {
 	var announcement model.Announcement
 	if err := c.ShouldBindJSON(&announcement); err != nil {
@@ -303,6 +314,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// WatchAnnouncements establishes a WebSocket connection and streams announcements from the database to the client.
 func (h *Handler) WatchAnnouncements(c *gin.Context) {
 	// Upgrade HTTP connection to WebSocket
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -380,7 +392,9 @@ func (h *Handler) WatchAnnouncements(c *gin.Context) {
 	}
 }
 
+// DeleteAnnouncement deletes a specific announcement from the database using the provided project and name parameters.
 func (h *Handler) DeleteAnnouncement(c *gin.Context) {
+	// Extract params from path
 	project := c.Param("project")
 	name := c.Param("name")
 
