@@ -4,27 +4,15 @@ import (
 	"fmt"
 	"github.com/nikitamishagin/corebgp/internal/model"
 	"github.com/spf13/cobra"
-	"strconv"
-	"strings"
 )
 
 // RootCmd initializes and returns the root command for the CoreBGP API server application.
 func RootCmd() *cobra.Command {
-	var (
-		endpointsList string
-		config        model.APIConfig
-	)
+	var config model.APIConfig
 	var cmd = &cobra.Command{
 		Use:   "apiserver",
 		Short: "CoreBGP API server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Parse endpoints from the provided CLI argument
-			endpoints, err := parseEndpoints(endpointsList)
-			if err != nil {
-				return err
-			}
-			config.Endpoints = endpoints
-
 			// Initialize the database adapter
 			databaseAdapter, err := initializeDatabaseAdapter(&config)
 			if err != nil {
@@ -41,8 +29,7 @@ func RootCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&config.DBType, "db-type", "etcd", "Database type")
-	cmd.Flags().StringVar(&endpointsList, "endpoints", "http://localhost:2379", "Comma separated list of database endpoints")
-	//cmd.Flags().StringSlice(&config.Endpoints, []string{"http://localhost:2379"}, "Comma separated list of database endpoints")
+	cmd.Flags().StringSliceVar(&config.DBEndpoints, "endpoints", []string{"http://localhost:2379"}, "Comma separated list of database endpoints")
 	cmd.Flags().StringVar(&config.Etcd.CACert, "etcd-ca", "", "Path to etcd CA certificate")
 	cmd.Flags().StringVar(&config.Etcd.ClientCert, "etcd-cert", "", "Path to etcd client certificate")
 	cmd.Flags().StringVar(&config.Etcd.ClientKey, "etcd-key", "", "Path to etcd client key")
@@ -59,7 +46,7 @@ func initializeDatabaseAdapter(config *model.APIConfig) (model.DatabaseAdapter, 
 	switch config.DBType {
 	case "etcd":
 		// Initialize Etcd adapter
-		etcdClient, err := NewEtcdClient(config.Endpoints, config.Etcd.CACert, config.Etcd.ClientCert, config.Etcd.ClientKey)
+		etcdClient, err := NewEtcdClient(config.DBEndpoints, config.Etcd.CACert, config.Etcd.ClientCert, config.Etcd.ClientKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize etcd adapter: %w", err)
 		}
@@ -71,43 +58,40 @@ func initializeDatabaseAdapter(config *model.APIConfig) (model.DatabaseAdapter, 
 	}
 }
 
-// parseEndpoints parses a comma-separated list of endpoints, validates each, and returns a slice of formatted endpoints.
-// Returns an error if any endpoint is invalid, empty, or if the port is not within the valid range (1-65535).
-func parseEndpoints(endpoints string) ([]string, error) {
-	if endpoints == "" {
-		return []string{}, fmt.Errorf("etcd endpoint cannot be empty")
-	}
+// TODO: Implement config validation
 
-	endpointsSlice := strings.Split(endpoints, ",")
-	var result []string
-
-	// Checking that all elements in a list are valid and parsing them
-	for i := range endpointsSlice {
-		baseURL := strings.TrimSpace(endpointsSlice[i])
-		if baseURL == "" {
-			return []string{}, fmt.Errorf("endpoint cannot be empty")
-		}
-
-		protocolAndHost := strings.Split(baseURL, "//")
-		if len(protocolAndHost) != 2 {
-			return []string{}, fmt.Errorf("endpoint must be in format proto://host:port")
-		}
-
-		hostAndPort := strings.Split(protocolAndHost[1], ":")
-		if len(hostAndPort) != 2 {
-			return []string{}, fmt.Errorf("endpoint must be in format proto://host:port")
-		}
-
-		port, err := strconv.ParseUint(hostAndPort[1], 10, 64)
-		if err != nil {
-			return []string{}, fmt.Errorf("port must be a number")
-		}
-		if port < 1 || port > 65535 {
-			return []string{}, fmt.Errorf("port must be between 1 and 65535")
-		}
-
-		result = append(result, protocolAndHost[1])
-	}
-
-	return result, nil
-}
+// validateEndpoints validates a list of endpoint URLs and ensures they have proper format, schema, host, and port.
+// Returns a slice of sanitized endpoints or an error if validation fails.
+//func validateEndpoints(endpoints []string) ([]string, error) {
+//	result := make([]string, len(endpoints))
+//
+//	// Checking that all elements in a list are valid and parsing them
+//	for i := range endpoints {
+//		baseURL := strings.TrimSpace(endpoints[i])
+//		if baseURL == "" {
+//			return []string{}, fmt.Errorf("endpoint cannot be empty")
+//		}
+//
+//		// Parse the URL to validate schema and host
+//		parsedURL, err := url.Parse(baseURL)
+//		if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+//			return nil, fmt.Errorf("endpoint must be in format proto://host:port, got: %s", baseURL)
+//		}
+//
+//		// Split host and port
+//		host, port, err := net.SplitHostPort(parsedURL.Host)
+//		if err != nil {
+//			return nil, fmt.Errorf("endpoint must be in format proto://host:port, got: %s", baseURL)
+//		}
+//
+//		// Validate port
+//		portNum, err := strconv.ParseUint(port, 10, 32)
+//		if err != nil || portNum < 1 || portNum > 65535 {
+//			return nil, fmt.Errorf("port must be a number between 1 and 65535, got: %s", port)
+//		}
+//
+//		result[i] = parsedURL.Host
+//	}
+//
+//	return result, nil
+//}

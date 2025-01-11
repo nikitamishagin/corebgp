@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"go.etcd.io/etcd/client/v3"
+	"net/url"
 	"os"
 	"time"
 )
@@ -37,14 +38,26 @@ func NewEtcdClient(endpoints []string, caFile, certFile, keyFile string) (*EtcdC
 		RootCAs:      caPool,
 	}
 
+	// Separate host from URL
+	parsedEndpoints := make([]string, len(endpoints))
+	for i := range endpoints {
+		parsedURL, err := url.Parse(endpoints[i])
+		if err != nil {
+			return nil, fmt.Errorf("failed to separete host from URL: %w", err)
+		}
+
+		parsedEndpoints[i] = parsedURL.Host
+	}
+
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   endpoints,
+		Endpoints:   parsedEndpoints,
 		DialTimeout: 3 * time.Second,
 		TLS:         tlsConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
+
 	return &EtcdClient{client: cli}, nil
 }
 
