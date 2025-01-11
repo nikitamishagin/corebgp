@@ -10,15 +10,18 @@ import (
 	"time"
 )
 
+// EtcdClient is a wrapper around the etcd client to simplify interactions and manage connection lifecycle.
 type EtcdClient struct {
 	client *clientv3.Client
 }
 
+// NewEtcdClient creates and initializes a new EtcdClient with the provided endpoints and TLS credentials.
 func NewEtcdClient(endpoints []string, caFile, certFile, keyFile string) (*EtcdClient, error) {
 	caCert, err := os.ReadFile(caFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read CA certificate: %w", err)
 	}
+
 	caPool := x509.NewCertPool()
 	if !caPool.AppendCertsFromPEM(caCert) {
 		return nil, fmt.Errorf("failed to append CA certificate")
@@ -64,6 +67,7 @@ func (e *EtcdClient) HealthCheck() error {
 	return nil
 }
 
+// Put inserts or updates a key-value pair in the etcd store.
 func (e *EtcdClient) Put(key, value string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -75,6 +79,7 @@ func (e *EtcdClient) Put(key, value string) error {
 	return nil
 }
 
+// Get retrieves the value associated with the given key from etcd store.
 func (e *EtcdClient) Get(key string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -92,6 +97,7 @@ func (e *EtcdClient) Get(key string) (string, error) {
 	return value, nil
 }
 
+// List retrieves all keys with the specified prefix from the etcd store and returns them as a slice of strings.
 func (e *EtcdClient) List(prefix string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -108,6 +114,7 @@ func (e *EtcdClient) List(prefix string) ([]string, error) {
 	return keys, nil
 }
 
+// GetObjects retrieves all values associated with keys that share the specified prefix from the etcd store.
 func (e *EtcdClient) GetObjects(prefix string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -125,6 +132,7 @@ func (e *EtcdClient) GetObjects(prefix string) ([]string, error) {
 	return values, nil
 }
 
+// Delete removes the key-value pair associated with the specified key from the etcd store.
 func (e *EtcdClient) Delete(key string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
