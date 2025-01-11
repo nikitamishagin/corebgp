@@ -136,17 +136,6 @@ func (e *EtcdClient) Delete(key string) error {
 	return nil
 }
 
-func (e *EtcdClient) Patch(key, value string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := e.client.Put(ctx, key, value)
-	if err != nil {
-		return fmt.Errorf("failed to patch data to etcd: %w", err)
-	}
-	return nil
-}
-
 // Watch sets up a watch operation on a specified key and streams events through a channel until the stop signal is received.
 // The stopChan is used to terminate the watch operation by canceling the associated context.
 func (e *EtcdClient) Watch(key string, stopChan <-chan struct{}) (<-chan clientv3.WatchResponse, error) {

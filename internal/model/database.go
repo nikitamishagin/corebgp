@@ -10,7 +10,6 @@ type DatabaseAdapter interface {
 	List(string) ([]string, error)
 	GetObjects(string) ([]string, error)
 	Put(string, string) error
-	Patch(string, string) error
 	Watch(string, <-chan struct{}) (<-chan clientv3.WatchResponse, error)
 	Delete(string) error
 }
