@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 	"net/url"
 	"os"
 	"time"
@@ -80,15 +81,36 @@ func (e *EtcdClient) HealthCheck() error {
 	return nil
 }
 
-// Put inserts or updates a key-value pair in the etcd store.
+// Put inserts or updates a key-value pair in the etcd store with a distributed lock.
 func (e *EtcdClient) Put(key, value string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Create a new session with TTL of 2 seconds
+	session, err := concurrency.NewSession(e.client, concurrency.WithTTL(2))
+	if err != nil {
+		return fmt.Errorf("failed to create session for lock: %w", err)
+	}
+	defer session.Close()
+
+	// Create a distributed lock for the given key (unique per key)
+	mutex := concurrency.NewMutex(session, "/lock"+key)
+
+	// Try to acquire the lock (enter the critical section)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	_, err := e.client.Put(ctx, key, value)
-	if err != nil {
+	//log.Printf("Attempting to acquire lock for key: %s\n", key)
+	if err := mutex.Lock(ctx); err != nil {
+		return fmt.Errorf("failed to acquire lock for key %s: %w", key, err)
+	}
+	//log.Printf("Lock acquired for key: %s\n", key)
+
+	// Ensure the lock is released at the end of the function
+	defer mutex.Unlock(ctx)
+
+	// Perform the Put operation
+	if _, err := e.client.Put(ctx, key, value); err != nil {
 		return fmt.Errorf("failed to put data to etcd: %w", err)
 	}
+
 	return nil
 }
 
