@@ -101,9 +101,9 @@ func (e *EtcdClient) List(prefix string) ([]string, error) {
 		return nil, fmt.Errorf("failed to get data from etcd: %w", err)
 	}
 
-	keys := make([]string, 0, len(resp.Kvs))
-	for _, kv := range resp.Kvs {
-		keys = append(keys, string(kv.Key))
+	keys := make([]string, len(resp.Kvs))
+	for i := range resp.Kvs {
+		keys[i] = string(resp.Kvs[i].Key)
 	}
 	return keys, nil
 }
@@ -117,9 +117,9 @@ func (e *EtcdClient) GetObjects(prefix string) ([]string, error) {
 		return nil, fmt.Errorf("failed to get data from etcd: %w", err)
 	}
 
-	values := make([]string, 0, len(resp.Kvs))
-	for _, kv := range resp.Kvs {
-		values = append(values, string(kv.Value))
+	values := make([]string, len(resp.Kvs))
+	for i := range resp.Kvs {
+		values[i] = string(resp.Kvs[i].Value)
 	}
 
 	return values, nil
