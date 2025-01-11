@@ -5,6 +5,9 @@ import (
 	"github.com/nikitamishagin/corebgp/internal/model"
 )
 
+// handleAnnouncementEvent processes a BGP announcement event to add, update, or delete routes based on the event type.
+// The function interacts with a GoBGPClient instance to update BGP routes accordingly.
+// If the event type is unrecognized or an error occurs during processing, it returns an error.
 func handleAnnouncementEvent(client *GoBGPClient, event *model.Event) error {
 	// Log the event being processed
 	fmt.Printf("Processing event: type=%s, address=%s, next-hops=%v\n", event.Type, event.Announcement.Addresses.AnnouncedIP, event.Announcement.NextHops)
