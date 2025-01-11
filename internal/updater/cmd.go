@@ -28,7 +28,7 @@ func RootCmd() *cobra.Command {
 			}
 			defer goBGPClient.Close()
 
-			// TODO: Implement configuration checking
+			// TODO: Implement GoBGP configuration checking
 			_, err = goBGPClient.GetBGP()
 			if err != nil {
 				return err
