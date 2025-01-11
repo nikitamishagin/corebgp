@@ -17,6 +17,8 @@ func RootCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&config.APIEndpoint, "api-endpoint", "http://localhost:8080", "URL of the API server")
+	cmd.Flags().StringVar(&config.Zone, "zone", "default", "Zone name")
+	cmd.Flags().StringVar(&config.LivenessTimeout, "liveness-timeout", "10s", "Liveness timeout")
 	cmd.Flags().StringVar(&config.LogPath, "log-path", "/var/log/corebgp/checker.log", "Path to the log file")
 	cmd.Flags().Int8VarP(&config.Verbose, "verbose", "v", 0, "Verbosity level")
 

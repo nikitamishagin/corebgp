@@ -31,7 +31,9 @@ type UpdaterConfig struct {
 
 // CheckerConfig represents the configuration parameters required to initialize and run the Checker system.
 type CheckerConfig struct {
-	APIEndpoint string `yaml:"api_endpoint"` // APIEndpoint specifies the URL to the API server endpoint.
-	LogPath     string `yaml:"log_path"`     // LogPath specifies the file path to the log file for storing checker logs.
-	Verbose     int8   `yaml:"verbose"`      // Verbose specifies the verbosity level for logging, where higher values produce more detailed logs.
+	APIEndpoint     string `yaml:"api_endpoint"`     // APIEndpoint specifies the URL to the API server endpoint.
+	Zone            string `yaml:"zone"`             // Zone specifies the geographic or logical zone where the Checker system is deployed.
+	LivenessTimeout string `yaml:"liveness_timeout"` // LivenessTimeout specifies the time interval during which the component should update its health status.
+	LogPath         string `yaml:"log_path"`         // LogPath specifies the file path to the log file for storing checker logs.
+	Verbose         int8   `yaml:"verbose"`          // Verbose specifies the verbosity level for logging, where higher values produce more detailed logs.
 }
