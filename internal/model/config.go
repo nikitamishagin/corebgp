@@ -28,3 +28,10 @@ type UpdaterConfig struct {
 	LogPath         string `yaml:"log_path"`          // LogPath specifies the file path to the log file for storing updater logs.
 	Verbose         int8   `yaml:"verbose"`           // Verbose specifies the verbosity level for logging, where higher values produce more detailed logs.
 }
+
+// CheckerConfig represents the configuration parameters required to initialize and run the Checker system.
+type CheckerConfig struct {
+	APIEndpoint string `yaml:"api_endpoint"` // APIEndpoint specifies the URL to the API server endpoint.
+	LogPath     string `yaml:"log_path"`     // LogPath specifies the file path to the log file for storing checker logs.
+	Verbose     int8   `yaml:"verbose"`      // Verbose specifies the verbosity level for logging, where higher values produce more detailed logs.
+}
