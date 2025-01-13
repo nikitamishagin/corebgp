@@ -29,8 +29,8 @@ func NewAPIClient(baseURL *string, timeout time.Duration) *APIClient {
 	}
 }
 
-// V1HealthCheck checks the health status of the API server (Version 1).
-func (c *APIClient) V1HealthCheck(ctx context.Context) error {
+// HealthCheck checks the health status of the API server (Version 1).
+func (c *APIClient) HealthCheck(ctx context.Context) error {
 	req, err := http.NewRequestWithContext(ctx, "GET", c.baseURL+"/healthz", nil)
 	if err != nil {
 		return err
@@ -49,8 +49,8 @@ func (c *APIClient) V1HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// V1ListAnnouncements кeturns a list of announcement IDs from the API (globally).
-func (c *APIClient) V1ListAnnouncements(ctx context.Context) ([]string, error) {
+// ListAnnouncements returns a list of announcement IDs from the API (globally).
+func (c *APIClient) ListAnnouncements(ctx context.Context) ([]string, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/", c.baseURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
@@ -78,8 +78,8 @@ func (c *APIClient) V1ListAnnouncements(ctx context.Context) ([]string, error) {
 	return response.Announcements, nil
 }
 
-// V1ListAllAnnouncements returns a list of all announcements from the API (globally).
-func (c *APIClient) V1ListAllAnnouncements(ctx context.Context) ([]model.Announcement, error) {
+// GetAnnouncements returns a list of all announcements from the API (globally).
+func (c *APIClient) GetAnnouncements(ctx context.Context) ([]model.Announcement, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/all", c.baseURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
@@ -105,8 +105,8 @@ func (c *APIClient) V1ListAllAnnouncements(ctx context.Context) ([]model.Announc
 	return announcements, nil
 }
 
-// V1ListProjectAnnouncements returns a list of announcement IDs from the API for the specified project.
-func (c *APIClient) V1ListProjectAnnouncements(ctx context.Context, project string) ([]string, error) {
+// ListAnnouncementsByProject returns a list of announcement IDs from the API for the specified project.
+func (c *APIClient) ListAnnouncementsByProject(ctx context.Context, project string) ([]string, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/", c.baseURL, project)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
@@ -134,8 +134,8 @@ func (c *APIClient) V1ListProjectAnnouncements(ctx context.Context, project stri
 	return response.Announcements, nil
 }
 
-// V1ListAllProjectAnnouncements returns a list of all announcements from the API for the specified project.
-func (c *APIClient) V1ListAllProjectAnnouncements(ctx context.Context, project string) ([]model.Announcement, error) {
+// GetAnnouncementsByProject returns a list of all announcements from the API for the specified project.
+func (c *APIClient) GetAnnouncementsByProject(ctx context.Context, project string) ([]model.Announcement, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/all", c.baseURL, project)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
@@ -161,8 +161,8 @@ func (c *APIClient) V1ListAllProjectAnnouncements(ctx context.Context, project s
 	return announcements, nil
 }
 
-// V1GetAnnouncement retrieves an announcement by project and name.
-func (c *APIClient) V1GetAnnouncement(ctx context.Context, project, name string) (*model.Announcement, error) {
+// GetAnnouncement retrieves an announcement by project and name.
+func (c *APIClient) GetAnnouncement(ctx context.Context, project, name string) (*model.Announcement, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
@@ -192,8 +192,8 @@ func (c *APIClient) V1GetAnnouncement(ctx context.Context, project, name string)
 	return &announcement, nil
 }
 
-// V1CreateAnnouncement creates a new announcement.
-func (c *APIClient) V1CreateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
+// CreateAnnouncement creates a new announcement.
+func (c *APIClient) CreateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
 	baseURL := c.baseURL + "/v1/announcements/"
 
 	data, err := json.Marshal(announcement)
@@ -225,8 +225,8 @@ func (c *APIClient) V1CreateAnnouncement(ctx context.Context, announcement *mode
 	return nil
 }
 
-// V1UpdateAnnouncement updates an existing announcement.
-func (c *APIClient) V1UpdateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
+// UpdateAnnouncement updates an existing announcement.
+func (c *APIClient) UpdateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
 	baseURL := c.baseURL + "/v1/announcements/"
 
 	data, err := json.Marshal(announcement)
@@ -258,8 +258,8 @@ func (c *APIClient) V1UpdateAnnouncement(ctx context.Context, announcement *mode
 	return nil
 }
 
-// V1DeleteAnnouncement deletes an announcement by project and name.
-func (c *APIClient) V1DeleteAnnouncement(ctx context.Context, project, name string) error {
+// DeleteAnnouncement deletes an announcement by project and name.
+func (c *APIClient) DeleteAnnouncement(ctx context.Context, project, name string) error {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
 
 	req, err := http.NewRequestWithContext(ctx, "DELETE", baseURL, nil)
@@ -284,8 +284,8 @@ func (c *APIClient) V1DeleteAnnouncement(ctx context.Context, project, name stri
 	return nil
 }
 
-// V1WatchAnnouncements establishes a WebSocket connection to watch announcements.
-func (c *APIClient) V1WatchAnnouncements(ctx context.Context, onEvent func(event model.Event)) error {
+// WatchAnnouncements establishes a WebSocket connection to watch announcements.
+func (c *APIClient) WatchAnnouncements(ctx context.Context, onEvent func(event model.Event)) error {
 
 	parsedURL, err := url.Parse(c.baseURL)
 	if err != nil {

@@ -40,7 +40,7 @@ func RootCmd() *cobra.Command {
 			apiClient := v1.NewAPIClient(&config.APIEndpoint, time.Second*5)
 
 			// Check if CoreBGP API server is healthy
-			err = apiClient.V1HealthCheck(ctx)
+			err = apiClient.HealthCheck(ctx)
 			if err != nil {
 				return err
 			}
@@ -58,7 +58,7 @@ func RootCmd() *cobra.Command {
 				defer wg.Done() // Decrement the WaitGroup counter when the goroutine ends
 
 				fmt.Println("Starting to watch announcements...")
-				err := apiClient.V1WatchAnnouncements(ctx, func(event model.Event) {
+				err := apiClient.WatchAnnouncements(ctx, func(event model.Event) {
 					// Push each incoming event into the channel
 					events <- event
 				})
