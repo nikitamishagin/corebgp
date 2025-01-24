@@ -45,12 +45,16 @@ func RootCmd() *cobra.Command {
 				return err
 			}
 
-			// Create a channel to process events
-			events := make(chan model.Event, 100) // Buffered channel to handle bursts of events
-			defer close(events)
+			// Create channels to synchronize data
+			announcementsChan := make(chan []model.Announcement)
+			routesChan := make(chan []model.Route)
 
 			// Create a WaitGroup to manage goroutines
 			var wg sync.WaitGroup
+
+			// Create a channel to process events
+			events := make(chan model.Event, 100) // Buffered channel to handle bursts of events
+			defer close(events)
 
 			// Goroutine for watching announcements
 			wg.Add(1) // Increment the WaitGroup counter
@@ -81,6 +85,38 @@ func RootCmd() *cobra.Command {
 					}(event)
 				}
 			}()
+
+			// Goroutine for fetching all announcements
+			wg.Add(1)
+			go func(ctx context.Context) {
+				defer wg.Done()
+
+				fmt.Println("Fetching all announcements from CoreBGP API...")
+				announcements, err := apiClient.GetAllAnnouncements(ctx)
+				if err != nil {
+					fmt.Printf("Failed to fetch announcements: %v\n", err)
+					cancel()
+					return
+				}
+
+				announcementsChan <- announcements
+				close(announcementsChan)
+			}(ctx)
+
+			// Goroutine for fetching all routes from GoBGP
+			wg.Add(1)
+			go func(ctx context.Context) {
+				defer wg.Done()
+				fmt.Println("Fetching all routes from GoBGP...")
+				routes, err := goBGPClient.ListPaths(ctx)
+				if err != nil {
+					fmt.Printf("Failed to fetch routes: %v\n", err)
+					cancel()
+					return
+				}
+				routesChan <- routes
+				close(routesChan)
+			}(ctx)
 
 			// Graceful shutdown: Ensure events channel is closed when the context is done
 			go func() {
