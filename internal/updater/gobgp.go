@@ -75,7 +75,7 @@ func (g *GoBGPClient) GetBGP() (string, error) {
 }
 
 // AddPaths adds multiple BGP routes (prefixes) with associated next-hops to the GoBGP server.
-func (g *GoBGPClient) AddPaths(prefix string, prefixLength uint32, nextHops []string) error {
+func (g *GoBGPClient) AddPaths(prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
 	// Generate the context for the gRPC call
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -97,7 +97,7 @@ func (g *GoBGPClient) AddPaths(prefix string, prefixLength uint32, nextHops []st
 
 	// Marshal the attributes (Pattrs) into *anypb.Any
 	originAttr, err := anypb.New(&api.OriginAttribute{
-		Origin: 0, // IGP
+		Origin: origin,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal origin attribute: %w", err)
@@ -116,13 +116,16 @@ func (g *GoBGPClient) AddPaths(prefix string, prefixLength uint32, nextHops []st
 
 		// Construct each Path object
 		paths[i] = &api.Path{
-			Family: &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST},
-			Nlri:   nlri,
+			Family: &api.Family{
+				Afi:  api.Family_AFI_IP,
+				Safi: api.Family_SAFI_UNICAST,
+			},
+			Nlri: nlri,
 			Pattrs: []*anypb.Any{
 				originAttr,
 				nextHopAttr,
 			},
-			Identifier: uint32(i + 1),
+			Identifier: identifier,
 		}
 	}
 
@@ -183,7 +186,7 @@ func (g *GoBGPClient) ListPath(prefix string) ([]string, error) {
 	return paths, nil
 }
 
-func (g *GoBGPClient) UpdatePath(prefix string, prefixLength uint32, nextHops []string) error {
+func (g *GoBGPClient) UpdatePath(prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
 	// Generate the context for the gRPC call
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -205,7 +208,7 @@ func (g *GoBGPClient) UpdatePath(prefix string, prefixLength uint32, nextHops []
 
 	// Marshal the attributes (Pattrs) into *anypb.Any
 	originAttr, err := anypb.New(&api.OriginAttribute{
-		Origin: 0, // IGP
+		Origin: origin,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal origin attribute: %w", err)
@@ -230,7 +233,7 @@ func (g *GoBGPClient) UpdatePath(prefix string, prefixLength uint32, nextHops []
 				originAttr,
 				nextHopAttr,
 			},
-			Identifier: uint32(i + 1),
+			Identifier: identifier,
 		}
 	}
 
@@ -254,7 +257,7 @@ func (g *GoBGPClient) UpdatePath(prefix string, prefixLength uint32, nextHops []
 }
 
 // DeletePath removes a specified BGP route (prefix) from GoBGP
-func (g *GoBGPClient) DeletePath(prefix string, prefixLength uint32, nextHops []string) error {
+func (g *GoBGPClient) DeletePath(prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
 	// Create context with timeout for gRPC call
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -266,6 +269,14 @@ func (g *GoBGPClient) DeletePath(prefix string, prefixLength uint32, nextHops []
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal NLRI for deletion: %w", err)
+	}
+
+	// Marshal the attributes (Pattrs) into *anypb.Any
+	originAttr, err := anypb.New(&api.OriginAttribute{
+		Origin: origin,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal origin attribute: %w", err)
 	}
 
 	for i := range nextHops {
@@ -285,9 +296,10 @@ func (g *GoBGPClient) DeletePath(prefix string, prefixLength uint32, nextHops []
 				Safi: api.Family_SAFI_UNICAST,
 			},
 			Pattrs: []*anypb.Any{
+				originAttr,
 				nextHopAttr,
 			},
-			Identifier: uint32(i + 1),
+			Identifier: identifier,
 		}
 
 		// Call DeletePath API with the constructed path

@@ -5,6 +5,8 @@ import (
 	"github.com/nikitamishagin/corebgp/internal/model"
 )
 
+//TODO: Replace event struct to route struct
+
 // handleAnnouncementEvent processes a BGP announcement event to add, update, or delete routes based on the event type.
 // The function interacts with a GoBGPClient instance to update BGP routes accordingly.
 // If the event type is unrecognized or an error occurs during processing, it returns an error.
