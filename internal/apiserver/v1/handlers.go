@@ -43,8 +43,8 @@ func (h *Handler) ListAnnouncements(c *gin.Context) {
 	})
 }
 
-// GetAnnouncements retrieves all announcements from the database, deserializing them into structured data.
-func (h *Handler) GetAnnouncements(c *gin.Context) {
+// GetAllAnnouncements retrieves all announcements from the database, deserializing them into structured data.
+func (h *Handler) GetAllAnnouncements(c *gin.Context) {
 	prefix := "v1/announcements/"
 
 	data, err := h.DB.GetObjects(prefix)
@@ -102,8 +102,8 @@ func (h *Handler) ListAnnouncementsByProject(c *gin.Context) {
 	})
 }
 
-// GetAnnouncementsByProject retrieves a list of announcements for a specified project by querying the database.
-func (h *Handler) GetAnnouncementsByProject(c *gin.Context) {
+// GetAllAnnouncementsByProject retrieves a list of announcements for a specified project by querying the database.
+func (h *Handler) GetAllAnnouncementsByProject(c *gin.Context) {
 	// Extract params from path
 	project := c.Param("project")
 	prefix := "v1/announcements/" + project + "/"

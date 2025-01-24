@@ -42,13 +42,13 @@ func setupRouter(db model.DatabaseAdapter) *gin.Engine {
 	v1.GET("/announcements/", v1Handler.ListAnnouncements)
 
 	// Retrieve all announcements without pagination
-	v1.GET("/announcements/all", v1Handler.GetAnnouncements)
+	v1.GET("/announcements/all", v1Handler.GetAllAnnouncements)
 
 	// Retrieve a paginated list of announcements for a specific project
 	v1.GET("/announcements/:project/", v1Handler.ListAnnouncementsByProject)
 
 	// Retrieve all announcements for a specific project without pagination
-	v1.GET("/announcements/:project/all", v1Handler.GetAnnouncementsByProject)
+	v1.GET("/announcements/:project/all", v1Handler.GetAllAnnouncementsByProject)
 
 	// Retrieve a specific announcement by project and name
 	v1.GET("/announcements/:project/:name", v1Handler.GetAnnouncement)

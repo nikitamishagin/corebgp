@@ -78,8 +78,8 @@ func (c *APIClient) ListAnnouncements(ctx context.Context) ([]string, error) {
 	return response.Announcements, nil
 }
 
-// GetAnnouncements returns a list of all announcements from the API (globally).
-func (c *APIClient) GetAnnouncements(ctx context.Context) ([]model.Announcement, error) {
+// GetAllAnnouncements returns a list of all announcements from the API (globally).
+func (c *APIClient) GetAllAnnouncements(ctx context.Context) ([]model.Announcement, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/all", c.baseURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
@@ -134,8 +134,8 @@ func (c *APIClient) ListAnnouncementsByProject(ctx context.Context, project stri
 	return response.Announcements, nil
 }
 
-// GetAnnouncementsByProject returns a list of all announcements from the API for the specified project.
-func (c *APIClient) GetAnnouncementsByProject(ctx context.Context, project string) ([]model.Announcement, error) {
+// GetAllAnnouncementsByProject returns a list of all announcements from the API for the specified project.
+func (c *APIClient) GetAllAnnouncementsByProject(ctx context.Context, project string) ([]model.Announcement, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/all", c.baseURL, project)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
