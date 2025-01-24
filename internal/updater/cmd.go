@@ -52,6 +52,7 @@ func RootCmd() *cobra.Command {
 			// Create a WaitGroup to manage goroutines
 			var wg sync.WaitGroup
 
+			// TODO: Replace events channel to routes channel
 			// Create a channel to process events
 			events := make(chan model.Event, 100) // Buffered channel to handle bursts of events
 			defer close(events)
@@ -117,6 +118,10 @@ func RootCmd() *cobra.Command {
 				routesChan <- routes
 				close(routesChan)
 			}(ctx)
+
+			// TODO: Add comparing existed routes with API routes
+
+			// TODO: Add update GoBGP routes
 
 			// Graceful shutdown: Ensure events channel is closed when the context is done
 			go func() {
