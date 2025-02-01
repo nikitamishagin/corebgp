@@ -43,6 +43,15 @@ func RootCmd() *cobra.Command {
 					continue
 				}
 
+				// For debug ListPath output
+				//routes, err := goBGPClient.ListPath([]string{"192.168.1.1/32"})
+				//if err != nil {
+				//	log.Fatalf("Failed to list paths: %v", err)
+				//}
+
+				//fmt.Println("Output from CMD:")
+				//fmt.Printf("Routes: %v\n", routes)
+
 				// Initialize the CoreBGP API client
 				apiClient := v1.NewAPIClient(&config.APIEndpoint, time.Second*5)
 
