@@ -5,9 +5,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/nikitamishagin/corebgp/internal/model"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/anypb"
+	"net"
 	"os"
 	"time"
 
@@ -148,11 +150,21 @@ func (g *GoBGPClient) AddPaths(prefix string, nextHops []string, prefixLength, o
 	return nil
 }
 
-// ListPath retrieves a list of BGP paths for the specified prefix from the GoBGP server. Returns a slice of paths or an error.
-func (g *GoBGPClient) ListPath(prefix string) ([]string, error) {
+// ListPath retrieves a list of BGP routes for the specified prefixes from the GoBGP server.
+// Returns a slice of Route structures or an error.
+func (g *GoBGPClient) ListPath(prefixes []string) ([]model.Route, error) {
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	// Build the list of prefixes for the API request.
+	lookupPrefixes := make([]*api.TableLookupPrefix, len(prefixes))
+	for i := range prefixes {
+		lookupPrefixes[i] = &api.TableLookupPrefix{
+			Prefix: prefixes[i],
+			Type:   api.TableLookupPrefix_LONGER, // Means searching for all more specific routes.
+		}
+	}
 
 	// Call ListPath API with a prefix filter
 	stream, err := g.client.ListPath(ctx, &api.ListPathRequest{
@@ -160,18 +172,14 @@ func (g *GoBGPClient) ListPath(prefix string) ([]string, error) {
 			Afi:  api.Family_AFI_IP,
 			Safi: api.Family_SAFI_UNICAST,
 		},
-		Prefixes: []*api.TableLookupPrefix{
-			{
-				Prefix: prefix,
-			},
-		},
+		Prefixes: lookupPrefixes,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list paths from GoBGP: %w", err)
 	}
 
-	// Collect paths from the stream
-	var paths []string
+	// Collect routes from the stream
+	var routes []model.Route
 	for {
 		resp, err := stream.Recv()
 		if err != nil {
@@ -180,10 +188,53 @@ func (g *GoBGPClient) ListPath(prefix string) ([]string, error) {
 			}
 			return nil, fmt.Errorf("error while receiving path from stream: %w", err)
 		}
-		paths = append(paths, resp.String())
+
+		// Extract the Destination from response
+		dest := resp.GetDestination()
+		if dest == nil {
+			continue // Skip in case of empty destination
+		}
+
+		prefix, ipNet, err := net.ParseCIDR(dest.Prefix)
+		if err != nil {
+			return nil, fmt.Errorf("error while parsing prefix: %w", err)
+		}
+
+		prefixLength, _ := ipNet.Mask.Size()
+
+		fmt.Printf("%v\n", dest)
+		// Loop through all paths in the Destination
+		for i := range dest.Paths {
+			//var ipPrefix api.IPAddressPrefix
+			//err := dest.Paths[i].GetNlri().UnmarshalTo(&ipPrefix)
+			//if err != nil {
+			//	return nil, fmt.Errorf("error while unmarshalling NLRI: %w", err)
+			//}
+
+			dest.Paths[i].GetPattrs()
+
+			// Find next hop in attributes
+			var nextHopAttr api.NextHopAttribute
+			for _, attr := range dest.Paths[i].GetPattrs() {
+				err := attr.UnmarshalTo(&nextHopAttr)
+				if err == nil {
+					break // Stop find
+				}
+			}
+
+			// Parse the attributes into the Route structure
+			route := model.Route{
+				Prefix:       prefix.String(),
+				PrefixLength: uint32(prefixLength),
+				NextHop:      nextHopAttr.NextHop,
+				Origin:       dest.Paths[i],
+				Identifier:,
+			}
+			routes = append(routes, route)
+		}
 	}
 
-	return paths, nil
+	return routes, nil
 }
 
 func (g *GoBGPClient) UpdatePath(prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
