@@ -55,7 +55,7 @@ func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient 
 	defer close(controllerRoutesChan)
 
 	fmt.Println("Fetching all routes from GoBGP...")
-	var allRoutes []Route
+	var allRoutes []model.Route
 
 	for {
 		paths, err := goBGPClient.ListPath(ctx)
@@ -76,8 +76,8 @@ func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient 
 func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-chan []model.Route, controllerRoutesChan <-chan []model.Route, goBGPClient *GoBGPClient) {
 	defer wg.Done()
 
-	var apiRoutes []Route
-	var controllerRoutes []Route
+	var apiRoutes []model.Route
+	var controllerRoutes []model.Route
 
 	// Receive routes from both channels
 	select {
