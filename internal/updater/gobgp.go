@@ -192,33 +192,35 @@ func (g *GoBGPClient) ListPath(prefixes []string) ([]model.Route, error) {
 		// Extract the Destination from response
 		dest := resp.GetDestination()
 		if dest == nil {
+			fmt.Printf("error while parsing destination: %v\n", resp)
 			continue // Skip in case of empty destination
 		}
 
+		// Get prefix and prefix length
 		prefix, ipNet, err := net.ParseCIDR(dest.Prefix)
 		if err != nil {
 			return nil, fmt.Errorf("error while parsing prefix: %w", err)
 		}
-
 		prefixLength, _ := ipNet.Mask.Size()
 
-		fmt.Printf("%v\n", dest)
 		// Loop through all paths in the Destination
 		for i := range dest.Paths {
-			//var ipPrefix api.IPAddressPrefix
-			//err := dest.Paths[i].GetNlri().UnmarshalTo(&ipPrefix)
-			//if err != nil {
-			//	return nil, fmt.Errorf("error while unmarshalling NLRI: %w", err)
-			//}
-
-			dest.Paths[i].GetPattrs()
-
-			// Find next hop in attributes
-			var nextHopAttr api.NextHopAttribute
+			var (
+				nextHopAttr api.NextHopAttribute
+				originAttr  api.OriginAttribute
+			)
+			// Find next hop and origin in attributes
 			for _, attr := range dest.Paths[i].GetPattrs() {
+				// Attempt to unmarshal the attribute into OriginAttribute
+				err = attr.UnmarshalTo(&originAttr)
+				if err != nil {
+					fmt.Printf("error parsing origin attribute for %s prefix: %v\n", dest.Prefix, err)
+				}
+
+				// Attempt to unmarshal the attribute into NextHopAttribute
 				err := attr.UnmarshalTo(&nextHopAttr)
-				if err == nil {
-					break // Stop find
+				if err == nil && nextHopAttr.NextHop != "" {
+					break // Found the next hop, stop further processing
 				}
 			}
 
@@ -227,13 +229,12 @@ func (g *GoBGPClient) ListPath(prefixes []string) ([]model.Route, error) {
 				Prefix:       prefix.String(),
 				PrefixLength: uint32(prefixLength),
 				NextHop:      nextHopAttr.NextHop,
-				Origin:       dest.Paths[i],
-				Identifier:,
+				Origin:       originAttr.Origin,
+				Identifier:   dest.Paths[i].Identifier,
 			}
 			routes = append(routes, route)
 		}
 	}
-
 	return routes, nil
 }
 
