@@ -1,2 +1,84 @@
 prefix:"192.168.1.1/32" paths:{nlri:{[type.googleapis.com/apipb.IPAddressPrefix]:{prefix_len:32 prefix:"192.168.1.1"}} pattrs:{[type.googleapis.com/apipb.OriginAttribute]:{}} pattrs:{[type.googleapis.com/apipb.NextHopAttribute]:{next_hop:"192.168.3.1"}} age:{seconds:1738436796} best:true validation:{} family:{afi:AFI_IP safi:SAFI_UNICAST} source_id:"<nil>" neighbor_ip:"<nil>" identifier:2 local_identifier:2} paths:{nlri:{[type.googleapis.com/apipb.IPAddressPrefix]:{prefix_len:32 prefix:"192.168.1.1"}} pattrs:{[type.googleapis.com/apipb.OriginAttribute]:{}} pattrs:{[type.googleapis.com/apipb.NextHopAttribute]:{next_hop:"192.168.2.1"}} age:{seconds:1738436796} validation:{} family:{afi:AFI_IP safi:SAFI_UNICAST} source_id:"<nil>" neighbor_ip:"<nil>" identifier:1 local_identifier:1}
 prefix:"192.168.2.1/32" paths:{nlri:{[type.googleapis.com/apipb.IPAddressPrefix]:{prefix_len:32 prefix:"192.168.2.1"}} pattrs:{[type.googleapis.com/apipb.OriginAttribute]:{}} pattrs:{[type.googleapis.com/apipb.NextHopAttribute]:{next_hop:"192.168.3.3"}} age:{seconds:1738436800} best:true validation:{} family:{afi:AFI_IP safi:SAFI_UNICAST} source_id:"<nil>" neighbor_ip:"<nil>" identifier:2 local_identifier:2} paths:{nlri:{[type.googleapis.com/apipb.IPAddressPrefix]:{prefix_len:32 prefix:"192.168.2.1"}} pattrs:{[type.googleapis.com/apipb.OriginAttribute]:{}} pattrs:{[type.googleapis.com/apipb.NextHopAttribute]:{next_hop:"192.168.2.3"}} age:{seconds:1738436800} validation:{} family:{afi:AFI_IP safi:SAFI_UNICAST} source_id:"<nil>" neighbor_ip:"<nil>" identifier:1 local_identifier:1}
+
+Formated:
+entries:
+  - prefix: "192.168.1.1/32"
+    paths:
+      - nlri:
+          type.googleapis.com/apipb.IPAddressPrefix:
+            prefix_len: 32
+            prefix: "192.168.1.1"
+        pattrs:
+          - type.googleapis.com/apipb.OriginAttribute: {}
+          - type.googleapis.com/apipb.NextHopAttribute:
+              next_hop: "192.168.3.1"
+        age:
+          seconds: 1738436796
+        best: true
+        validation: {}
+        family:
+          afi: "AFI_IP"
+          safi: "SAFI_UNICAST"
+        source_id: "<nil>"
+        neighbor_ip: "<nil>"
+        identifier: 2
+        local_identifier: 2
+      - nlri:
+          type.googleapis.com/apipb.IPAddressPrefix:
+            prefix_len: 32
+            prefix: "192.168.1.1"
+        pattrs:
+          - type.googleapis.com/apipb.OriginAttribute: {}
+          - type.googleapis.com/apipb.NextHopAttribute:
+              next_hop: "192.168.2.1"
+        age:
+          seconds: 1738436796
+        validation: {}
+        family:
+          afi: "AFI_IP"
+          safi: "SAFI_UNICAST"
+        source_id: "<nil>"
+        neighbor_ip: "<nil>"
+        identifier: 1
+        local_identifier: 1
+
+  - prefix: "192.168.2.1/32"
+    paths:
+      - nlri:
+          type.googleapis.com/apipb.IPAddressPrefix:
+            prefix_len: 32
+            prefix: "192.168.2.1"
+        pattrs:
+          - type.googleapis.com/apipb.OriginAttribute: {}
+          - type.googleapis.com/apipb.NextHopAttribute:
+              next_hop: "192.168.3.3"
+        age:
+          seconds: 1738436800
+        best: true
+        validation: {}
+        family:
+          afi: "AFI_IP"
+          safi: "SAFI_UNICAST"
+        source_id: "<nil>"
+        neighbor_ip: "<nil>"
+        identifier: 2
+        local_identifier: 2
+      - nlri:
+          type.googleapis.com/apipb.IPAddressPrefix:
+            prefix_len: 32
+            prefix: "192.168.2.1"
+        pattrs:
+          - type.googleapis.com/apipb.OriginAttribute: {}
+          - type.googleapis.com/apipb.NextHopAttribute:
+              next_hop: "192.168.2.3"
+        age:
+          seconds: 1738436800
+        validation: {}
+        family:
+          afi: "AFI_IP"
+          safi: "SAFI_UNICAST"
+        source_id: "<nil>"
+        neighbor_ip: "<nil>"
+        identifier: 1
+        local_identifier: 1
