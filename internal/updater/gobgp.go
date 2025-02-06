@@ -6,14 +6,12 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/nikitamishagin/corebgp/internal/model"
+	api "github.com/osrg/gobgp/v3/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/anypb"
 	"net"
 	"os"
-	"time"
-
-	api "github.com/osrg/gobgp/v3/api"
 )
 
 // GoBGPClient is struct for manage GoBGP client
@@ -77,11 +75,7 @@ func (g *GoBGPClient) GetBGP() (string, error) {
 }
 
 // AddPaths adds multiple BGP routes (prefixes) with associated next-hops to the GoBGP server.
-func (g *GoBGPClient) AddPaths(prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
-	// Generate the context for the gRPC call
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func (g *GoBGPClient) AddPaths(ctx context.Context, prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
 	// Set up the stream
 	stream, err := g.client.AddPathStream(ctx)
 	if err != nil {
@@ -152,11 +146,7 @@ func (g *GoBGPClient) AddPaths(prefix string, nextHops []string, prefixLength, o
 
 // ListPath retrieves a list of BGP routes for the specified prefixes from the GoBGP server.
 // Returns a slice of Route structures or an error.
-func (g *GoBGPClient) ListPath(prefixes []string) ([]model.Route, error) {
-	// Create context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (g *GoBGPClient) ListPath(ctx context.Context, prefixes []string) ([]model.Route, error) {
 	// Build the list of prefixes for the API request.
 	lookupPrefixes := make([]*api.TableLookupPrefix, len(prefixes))
 	for i := range prefixes {
@@ -238,11 +228,7 @@ func (g *GoBGPClient) ListPath(prefixes []string) ([]model.Route, error) {
 	return routes, nil
 }
 
-func (g *GoBGPClient) UpdatePath(prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
-	// Generate the context for the gRPC call
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func (g *GoBGPClient) UpdatePath(ctx context.Context, prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
 	// Set up the stream
 	stream, err := g.client.AddPathStream(ctx)
 	if err != nil {
@@ -309,11 +295,7 @@ func (g *GoBGPClient) UpdatePath(prefix string, nextHops []string, prefixLength,
 }
 
 // DeletePath removes a specified BGP route (prefix) from GoBGP
-func (g *GoBGPClient) DeletePath(prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
-	// Create context with timeout for gRPC call
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (g *GoBGPClient) DeletePath(ctx context.Context, prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
 	// Marshal the NLRI (route information) into *anypb.Any
 	nlri, err := anypb.New(&api.IPAddressPrefix{
 		Prefix:    prefix,
