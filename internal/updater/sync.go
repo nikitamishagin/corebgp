@@ -2,11 +2,9 @@ package updater
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/nikitamishagin/corebgp/internal/model"
 	v1 "github.com/nikitamishagin/corebgp/pkg/client/v1"
-	"io"
 	"net"
 	"sync"
 )
@@ -63,27 +61,30 @@ func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APICl
 	return nil
 }
 
-// TODO: Refactor fetchControllerRoutes func
-func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient *GoBGPClient, controllerRoutesChan chan<- []model.Route) {
+func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient *GoBGPClient, controllerRoutesChan chan<- map[string]model.Route) error {
 	defer wg.Done()
 	defer close(controllerRoutesChan)
 
 	fmt.Println("Fetching all routes from GoBGP...")
-	var allRoutes []model.Route
 
-	for {
-		paths, err := goBGPClient.ListPath(ctx)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break // No more data
-			}
-			fmt.Printf("Error fetching routes from GoBGP: %v\n", err)
-			return
-		}
-		allRoutes = append(allRoutes, batch...)
+	routes, err := goBGPClient.ListPath(ctx, []string{"0.0.0.0/0"})
+	if err != nil {
+		controllerRoutesChan <- map[string]model.Route{}
+		return fmt.Errorf("failed to fetch routes from GoBGP: %w", err)
+	}
+	if len(routes) == 0 {
+		controllerRoutesChan <- map[string]model.Route{}
+		fmt.Println("No routes found in GoBGP.")
+		return nil
 	}
 
-	controllerRoutesChan <- allRoutes
+	routeMap := make(map[string]model.Route)
+	for i := range routes {
+		// Create a new key and write to map
+		key := fmt.Sprintf("%s/%d-%v", routes[i].Prefix, routes[i].PrefixLength, routes[i].NextHop)
+		routeMap[key] = routes[i]
+	}
+	return nil
 }
 
 // TODO: Refactor synchronizeRoutes func
