@@ -19,28 +19,23 @@
     "path": "/health",
     "port": 8080,
     "method": "GET",
-    "interval": 30,
-    "timeout": 5,
-    "grace-period": 120
+    "interval": 5,
+    "timeout": 500
   },
-  "status": {
-    "status": "Active",
-    "details": [
-      {
-        "host": "192.168.2.1",
-        "status": "Healthy",
-        "code": 200,
-        "msg": "Health check successful",
-        "timestamp": "2023-10-15T12:00:00Z"
-      },
-      {
-        "host": "192.168.3.1",
-        "status": "Unhealthy",
-        "code": 500,
-        "msg": "Health check failed",
-        "timestamp": "2023-10-15T12:01:00Z"
-      }
-    ],
-    "timestamp": "2023-10-15T12:02:00Z"
-  }
+  "statuses": [
+    {
+      "next-hop": "192.168.2.1",
+      "health": true,
+      "code": 200,
+      "msg": "Health check passed",
+      "timestamp": "2023-10-25T12:34:56Z"
+    },
+    {
+      "next-hop": "192.168.3.1",
+      "health": false,
+      "code": 500,
+      "msg": "Health check failed",
+      "timestamp": "2023-10-25T12:35:00Z"
+    }
+  ]
 }
