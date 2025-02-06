@@ -28,7 +28,7 @@ type Announcement struct {
 	Addresses   Addresses   `json:"addresses"`    // Addresses represents a collection of network-related data, including subnets, zone, and announcing ip.
 	NextHops    []string    `json:"next-hops"`    // NextHops represents a collection of next-hop IP addresses used for routing purposes.
 	HealthCheck HealthCheck `json:"health-check"` // HealthCheck represents the configuration and parameters for performing health checks on next hops.
-	Status      Status      `json:"status"`       // Status represents the current state of an announcement with details and a timestamp.
+	Status      []Status    `json:"statuses"`     // Status represents the state of a health check including results, details, and timing information.
 }
 
 // Meta represents metadata information including a descriptive name and associated project for a BGP announcement.
@@ -60,17 +60,10 @@ type HealthCheck struct {
 	GracePeriod   int    `json:"grace-period"` // GracePeriod specifies the time in seconds to wait before marking the health check as failed after a disruption.
 }
 
-// Status represents the current state of an announcement with details and a timestamp.
+// Status represents the state of a health check including results, details, and timing information.
 type Status struct {
-	Status    string    `json:"status"`    // Status indicates the current operational state of the announcement.
-	Details   []Details `json:"details"`   // Details gives a detailed description of the status of the announcement.
-	Timestamp string    `json:"timestamp"` // Timestamp represents the time at which the status was recorded in ISO 8601 format.
-}
-
-// Details provides information about the health check results for a specific host, including its status and message.
-type Details struct {
-	Host      string `json:"host"`      // Host represents the address associated with the next hop.
-	Status    string `json:"status"`    // Status indicates the current health check result.
+	NextHop   string `json:"next-hop"`  // NextHop specifies the IP address to which traffic should be routed as the next hop in the network path.
+	Health    bool   `json:"health"`    // Health indicates whether the health check passed (true) or failed (false).
 	Code      int    `json:"code"`      // Code is the health check HTTP response status codes.
 	Message   string `json:"msg"`       // Message provides additional details or context about the health check result.
 	Timestamp string `json:"timestamp"` // Timestamp represents the time at which the status was recorded in ISO 8601 format.
