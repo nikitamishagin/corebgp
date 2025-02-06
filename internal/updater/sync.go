@@ -87,31 +87,55 @@ func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient 
 	return nil
 }
 
-// TODO: Refactor synchronizeRoutes func
-func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-chan []model.Route, controllerRoutesChan <-chan []model.Route, goBGPClient *GoBGPClient) {
+// TODO: Complete synchronizeRoutes function
+func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-chan map[string]model.Route, controllerRoutesChan <-chan map[string]model.Route, goBGPClient *GoBGPClient) error {
 	defer wg.Done()
 
-	var apiRoutes []model.Route
-	var controllerRoutes []model.Route
-
-	// Receive routes from both channels
 	select {
-	case apiRoutes = <-apiRoutesChan:
-	case <-ctx.Done():
-		fmt.Println("Context canceled before receiving API routes.")
-		return
+	case apiRouteMap, ok := <-apiRoutesChan:
+		if !ok {
+			return fmt.Errorf("apiRoutesChan closed unexpectedly")
+		}
+
+	case controllerRouteMap, ok := <-controllerRoutesChan:
+		if !ok {
+			return fmt.Errorf("controllerRoutesChan closed unexpectedly")
+		}
 	}
 
-	select {
-	case controllerRoutes = <-controllerRoutesChan:
-	case <-ctx.Done():
-		fmt.Println("Context canceled before receiving GoBGP routes.")
-		return
+	apiRouteMap := <-apiRoutesChan
+	controllerRouteMap := <-controllerRoutesChan
+
+	var toAdd, toRemove []model.Route
+
+	for key, route := range apiRouteMap {
+		if _, exists := controllerRouteMap[key]; !exists {
+			goBGPClient.AddPaths(ctx)
+		} else {
+			delete(controllerRouteMap, key)
+		}
 	}
 
-	// Perform synchronization
-	fmt.Println("Starting route synchronization...")
-	if err := syncRoutes(apiRoutes, controllerRoutes, goBGPClient); err != nil {
-		fmt.Printf("Failed to synchronize routes: %v\n", err)
+	for _, route := range controllerRouteMap {
+		toRemove = append(toRemove, route)
 	}
+
+	if len(toRemove) > 0 {
+		fmt.Printf("Removing %d routes from GoBGP...\n", len(toRemove))
+		err := goBGPClient.RemoveRoutes(ctx, toRemove)
+		if err != nil {
+			fmt.Printf("Failed to remove routes: %v\n", err)
+		}
+	}
+
+	if len(toAdd) > 0 {
+		fmt.Printf("Adding %d routes to GoBGP...\n", len(toAdd))
+		err := goBGPClient.AddRoutes(ctx, toAdd)
+		if err != nil {
+			fmt.Printf("Failed to add routes: %v\n", err)
+		}
+	}
+
+	fmt.Println("Route synchronization completed.")
+	return nil
 }
