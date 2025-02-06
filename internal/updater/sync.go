@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APIClient, apiRoutesChan chan<- []model.Route) {
+func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APIClient, apiRoutesChan chan<- map[string]model.Route) error {
 	defer wg.Done()
 	defer close(apiRoutesChan)
 
@@ -20,33 +20,47 @@ func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APICl
 	// Get all announcements from CoreBGP API
 	announcements, err := apiClient.GetAllAnnouncements(ctx)
 	if err != nil {
-		fmt.Printf("Error fetching routes from API: %v\n", err)
-		apiRoutesChan <- []model.Route{}
-		return
+		apiRoutesChan <- map[string]model.Route{}
+		return fmt.Errorf("failed to fetch routes from API: %w", err)
 	}
 	if len(announcements) == 0 {
+		apiRoutesChan <- map[string]model.Route{}
 		fmt.Println("No routes found in API.")
-		apiRoutesChan <- []model.Route{}
-		return
-	}
-
-	// Define max capacity for a slice of routes
-	var count = 0
-	for i := range announcements {
-		count += len(announcements[i].Status.Details)
+		return nil
 	}
 
 	// Convert announcement information to routes
-	allRoutes := make([]model.Route, 0, count)
+	routeMap := make(map[string]model.Route)
 	for i := range announcements {
-		routes, err := announcementToRoutes(&announcements[i])
+		// Parse announced IP
+		ip, ipNet, err := net.ParseCIDR(announcements[i].Addresses.AnnouncedIP)
 		if err != nil {
-			fmt.Printf("Error converting announcement to routes: %v\n", err)
+			fmt.Printf("error parsing announced IP: %v\n", err)
 			continue
 		}
-		allRoutes = append(allRoutes, routes...)
+		mask, _ := ipNet.Mask.Size()
+
+		// Convert announcement information to routes
+		for j := range announcements[i].Status {
+			// Get healthy next hops from announcement status
+			if announcements[i].Status[j].Health {
+				// Make route object
+				route := model.Route{
+					Prefix:       ip.String(),
+					PrefixLength: uint32(mask),
+					NextHop:      announcements[i].Status[j].NextHop,
+					Origin:       0,
+					Identifier:   uint32(j),
+				}
+
+				// Create a new key and write to map
+				key := fmt.Sprintf("%s/%d-%v", route.Prefix, route.PrefixLength, route.NextHop)
+				routeMap[key] = route
+			}
+		}
 	}
-	apiRoutesChan <- allRoutes
+	apiRoutesChan <- routeMap
+	return nil
 }
 
 // TODO: Refactor fetchControllerRoutes func
@@ -99,44 +113,4 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 	if err := syncRoutes(apiRoutes, controllerRoutes, goBGPClient); err != nil {
 		fmt.Printf("Failed to synchronize routes: %v\n", err)
 	}
-}
-
-func announcementToRoutes(announcement *model.Announcement, routeMap map[string]model.Route) (map[string]model.Route, error) {
-	var ipParsed bool
-
-	// Convert announcement information to routes
-	for i := range announcement.Status {
-		// Get healthy next hops from announcement status
-		if announcement.Status[i].Health {
-			var (
-				ip   net.IP
-				mask int
-			)
-
-			if !ipParsed {
-				// Parse announced IP
-				ip, ipNet, err := net.ParseCIDR(announcement.Addresses.AnnouncedIP)
-				if err != nil {
-					return nil, err
-				}
-				mask, _ := ipNet.Mask.Size()
-
-				ipParsed = true
-			}
-
-			// Make route object
-			route := model.Route{
-				Prefix:       ip.String(),
-				PrefixLength: uint32(mask),
-				NextHop:      announcement.Status[i].NextHop,
-				Origin:       0,
-				Identifier:   uint32(i),
-			}
-
-			key := fmt.Sprintf("%s/%d-%v", route.Prefix, route.PrefixLength, route.NextHop)
-			routeMap[key] = route
-		}
-	}
-
-	return routeMap, nil
 }
