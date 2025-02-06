@@ -101,34 +101,42 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 	}
 }
 
-func announcementToRoutes(announcement *model.Announcement) ([]model.Route, error) {
-	// Parse announced IP
-	ip, ipNet, err := net.ParseCIDR(announcement.Addresses.AnnouncedIP)
-	if err != nil {
-		return nil, err
-	}
-	mask, _ := ipNet.Mask.Size()
+func announcementToRoutes(announcement *model.Announcement, routeMap map[string]model.Route) (map[string]model.Route, error) {
+	var ipParsed bool
 
 	// Convert announcement information to routes
-	routes := make([]model.Route, 0, len(announcement.Status.Details))
-	for i := range announcement.Status.Details {
-		var nextHop string
-
+	for i := range announcement.Status {
 		// Get healthy next hops from announcement status
-		if announcement.Status.Details[i].Status == "health" {
-			nextHop = announcement.Status.Details[i].Host
-		}
+		if announcement.Status[i].Health {
+			var (
+				ip   net.IP
+				mask int
+			)
 
-		// Make route
-		route := model.Route{
-			Prefix:       ip.String(),
-			PrefixLength: uint32(mask),
-			NextHop:      nextHop,
-			Origin:       0,
-			Identifier:   i,
+			if !ipParsed {
+				// Parse announced IP
+				ip, ipNet, err := net.ParseCIDR(announcement.Addresses.AnnouncedIP)
+				if err != nil {
+					return nil, err
+				}
+				mask, _ := ipNet.Mask.Size()
+
+				ipParsed = true
+			}
+
+			// Make route object
+			route := model.Route{
+				Prefix:       ip.String(),
+				PrefixLength: uint32(mask),
+				NextHop:      announcement.Status[i].NextHop,
+				Origin:       0,
+				Identifier:   uint32(i),
+			}
+
+			key := fmt.Sprintf("%s/%d-%v", route.Prefix, route.PrefixLength, route.NextHop)
+			routeMap[key] = route
 		}
-		routes = append(routes, route)
 	}
 
-	return routes, nil
+	return routeMap, nil
 }
