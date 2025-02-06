@@ -52,12 +52,11 @@ type Subnet struct {
 
 // HealthCheck is a configuration for performing health checks on the next hop.
 type HealthCheck struct {
-	Path          string `json:"path"`         // Path specifies the endpoint to be used for the health check process.
-	Port          int    `json:"port"`         // Port specifies the port number to be used for the health check process.
-	Method        string `json:"method"`       // Method specifies the HTTP method to be used for the health check process.
-	CheckInterval int    `json:"interval"`     // CheckInterval specifies the interval in seconds between consecutive health check attempts.
-	Timeout       int    `json:"timeout"`      // Timeout specifies the duration in seconds before a health check request times out.
-	GracePeriod   int    `json:"grace-period"` // GracePeriod specifies the time in seconds to wait before marking the health check as failed after a disruption.
+	Path          string `json:"path"`     // Path specifies the endpoint to be used for the health check process.
+	Port          int    `json:"port"`     // Port specifies the port number to be used for the health check process.
+	Method        string `json:"method"`   // Method specifies the HTTP method to be used for the health check process.
+	CheckInterval int    `json:"interval"` // CheckInterval specifies the interval in seconds between consecutive health check attempts.
+	Timeout       int    `json:"timeout"`  // Timeout specifies the duration in milliseconds before a health check request times out.
 }
 
 // Status represents the state of a health check including results, details, and timing information.
