@@ -294,7 +294,7 @@ func (g *GoBGPClient) UpdatePath(ctx context.Context, prefix string, nextHops []
 }
 
 // DeletePath removes a specified BGP route (prefix) from GoBGP
-func (g *GoBGPClient) DeletePath(ctx context.Context, prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
+func (g *GoBGPClient) DeletePath(ctx context.Context, prefix string, nextHops string, prefixLength, origin, identifier uint32) error {
 	// Marshal the NLRI (route information) into *anypb.Any
 	nlri, err := anypb.New(&api.IPAddressPrefix{
 		Prefix:    prefix,
@@ -312,36 +312,34 @@ func (g *GoBGPClient) DeletePath(ctx context.Context, prefix string, nextHops []
 		return fmt.Errorf("failed to marshal origin attribute: %w", err)
 	}
 
-	for i := range nextHops {
-		// Marshal the NextHop attribute into *anypb.Any (if required)
-		nextHopAttr, err := anypb.New(&api.NextHopAttribute{
-			NextHop: nextHops[i],
-		})
-		if err != nil {
-			return fmt.Errorf("failed to marshal next-hop attribute for deletion: %w", err)
-		}
+	// Marshal the NextHop attribute into *anypb.Any (if required)
+	nextHopAttr, err := anypb.New(&api.NextHopAttribute{
+		NextHop: nextHops,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal next-hop attribute for deletion: %w", err)
+	}
 
-		// Construct the Path object with the NLRI and NextHop
-		path := &api.Path{
-			Nlri: nlri,
-			Family: &api.Family{
-				Afi:  api.Family_AFI_IP,
-				Safi: api.Family_SAFI_UNICAST,
-			},
-			Pattrs: []*anypb.Any{
-				originAttr,
-				nextHopAttr,
-			},
-			Identifier: identifier,
-		}
+	// Construct the Path object with the NLRI and NextHop
+	path := &api.Path{
+		Nlri: nlri,
+		Family: &api.Family{
+			Afi:  api.Family_AFI_IP,
+			Safi: api.Family_SAFI_UNICAST,
+		},
+		Pattrs: []*anypb.Any{
+			originAttr,
+			nextHopAttr,
+		},
+		Identifier: identifier,
+	}
 
-		// Call DeletePath API with the constructed path
-		_, err = g.client.DeletePath(ctx, &api.DeletePathRequest{
-			Path: path,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to delete path from GoBGP: %w", err)
-		}
+	// Call DeletePath API with the constructed path
+	_, err = g.client.DeletePath(ctx, &api.DeletePathRequest{
+		Path: path,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete path from GoBGP: %w", err)
 	}
 
 	return nil

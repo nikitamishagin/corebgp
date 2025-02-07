@@ -153,7 +153,7 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 
 		for i := range toRemove {
 			// Attempt to remove each route from GoBGP.
-			err := goBGPClient.DeletePath(ctx, toRemove[i].Prefix, []string{toRemove[i].NextHop}, toRemove[i].PrefixLength, toRemove[i].Origin, toRemove[i].Identifier)
+			err := goBGPClient.DeletePath(ctx, toRemove[i].Prefix, toRemove[i].NextHop, toRemove[i].PrefixLength, toRemove[i].Origin, toRemove[i].Identifier)
 			if err != nil {
 				fmt.Printf("Failed to remove routes: %v\n", err)
 			}
