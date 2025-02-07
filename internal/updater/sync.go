@@ -86,52 +86,77 @@ func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient 
 	return nil
 }
 
-// TODO: Complete synchronizeRoutes function
+// synchronizeRoutes synchronizes BGP routes between an API channel and a controller channel using a GoBGP client.
 func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-chan map[string]Route, controllerRoutesChan <-chan map[string]Route, goBGPClient *GoBGPClient) error {
 	defer wg.Done()
 
-	select {
-	case apiRouteMap, ok := <-apiRoutesChan:
-		if !ok {
-			return fmt.Errorf("apiRoutesChan closed unexpectedly")
-		}
+	var (
+		apiRouteMap, controllerRouteMap map[string]Route
+		apiOk, controllerOk             bool
+	)
 
-	case controllerRouteMap, ok := <-controllerRoutesChan:
-		if !ok {
-			return fmt.Errorf("controllerRoutesChan closed unexpectedly")
+	// Loop until both apiRoutesChan and controllerRoutesChan are closed and all data is received.
+	for !apiOk || !controllerOk {
+		select {
+		case apiRoutes, open := <-apiRoutesChan:
+			if open {
+				apiRouteMap = apiRoutes
+			} else {
+				apiOk = true
+			}
+
+		// Receive data from the controller routes channel.
+		case controllerRoutes, open := <-controllerRoutesChan:
+			if open {
+				controllerRouteMap = controllerRoutes
+			} else {
+				controllerOk = true
+			}
 		}
 	}
 
-	apiRouteMap := <-apiRoutesChan
-	controllerRouteMap := <-controllerRoutesChan
-
+	// Variables to store routes that need to be added to or removed from GoBGP.
 	var toAdd, toRemove []Route
 
+	// Compare the API route map with the controller route map.
+	// Identify routes to add (present in the API but not in the controller).
 	for key, route := range apiRouteMap {
 		if _, exists := controllerRouteMap[key]; !exists {
-			goBGPClient.AddPaths(ctx)
+			toAdd = append(toAdd, route)
 		} else {
+			// Remove matching routes from the controller map for further processing.
 			delete(controllerRouteMap, key)
 		}
 	}
 
-	for _, route := range controllerRouteMap {
-		toRemove = append(toRemove, route)
+	// Identify routes to remove (those still left in the controller map).
+	for i := range controllerRouteMap {
+		toRemove = append(toRemove, controllerRouteMap[i])
 	}
 
+	// Process removal of routes from GoBGP.
 	if len(toRemove) > 0 {
 		fmt.Printf("Removing %d routes from GoBGP...\n", len(toRemove))
-		err := goBGPClient.RemoveRoutes(ctx, toRemove)
-		if err != nil {
-			fmt.Printf("Failed to remove routes: %v\n", err)
+
+		for i := range toRemove {
+			// Attempt to remove each route from GoBGP.
+			err := goBGPClient.DeletePath(ctx, toRemove[i].Prefix, []string{toRemove[i].NextHop}, toRemove[i].PrefixLength, toRemove[i].Origin, toRemove[i].Identifier)
+			if err != nil {
+				fmt.Printf("Failed to remove routes: %v\n", err)
+			}
 		}
 	}
 
+	// Process addition of routes to GoBGP.
 	if len(toAdd) > 0 {
 		fmt.Printf("Adding %d routes to GoBGP...\n", len(toAdd))
-		err := goBGPClient.AddRoutes(ctx, toAdd)
-		if err != nil {
-			fmt.Printf("Failed to add routes: %v\n", err)
+
+		for i := range toAdd {
+			// Attempt to add each route to GoBGP.
+			err := goBGPClient.AddPaths(ctx, toAdd[i].Prefix, []string{toAdd[i].NextHop}, toAdd[i].PrefixLength, toAdd[i].Origin, toAdd[i].Identifier)
+			if err != nil {
+				fmt.Printf("Failed to add routes: %v\n", err)
+			}
 		}
 	}
 
