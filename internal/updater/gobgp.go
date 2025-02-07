@@ -110,7 +110,7 @@ func (g *GoBGPClient) AddPaths(ctx context.Context, routes []Route) error {
 		}
 
 		// Construct each Path object
-		path := &api.Path{
+		paths[i] = &api.Path{
 			Family: &api.Family{
 				Afi:  api.Family_AFI_IP,
 				Safi: api.Family_SAFI_UNICAST,
@@ -122,8 +122,6 @@ func (g *GoBGPClient) AddPaths(ctx context.Context, routes []Route) error {
 			},
 			Identifier: routes[i].Identifier,
 		}
-
-		paths[i] = path
 	}
 
 	// Construct the AddPathStreamRequest with multiple paths
