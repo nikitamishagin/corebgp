@@ -153,9 +153,9 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 
 		for i := range toRemove {
 			// Attempt to remove each route from GoBGP.
-			err := goBGPClient.DeletePath(ctx, toRemove[i].Prefix, toRemove[i].NextHop, toRemove[i].PrefixLength, toRemove[i].Origin, toRemove[i].Identifier)
+			err := goBGPClient.DeletePath(ctx, toRemove[i])
 			if err != nil {
-				fmt.Printf("Failed to remove routes: %v\n", err)
+				fmt.Printf("failed to remove route: %v\n", err)
 			}
 		}
 	}
@@ -164,12 +164,9 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 	if len(toAdd) > 0 {
 		fmt.Printf("Adding %d routes to GoBGP...\n", len(toAdd))
 
-		for i := range toAdd {
-			// Attempt to add each route to GoBGP.
-			err := goBGPClient.AddPaths(ctx, toAdd[i].Prefix, []string{toAdd[i].NextHop}, toAdd[i].PrefixLength, toAdd[i].Origin, toAdd[i].Identifier)
-			if err != nil {
-				fmt.Printf("Failed to add routes: %v\n", err)
-			}
+		err := goBGPClient.AddPaths(ctx, toAdd)
+		if err != nil {
+			fmt.Printf("failed to add routes: %v\n", err)
 		}
 	}
 
