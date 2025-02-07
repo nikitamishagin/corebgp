@@ -227,36 +227,35 @@ func (g *GoBGPClient) ListPath(ctx context.Context, prefixes []string) ([]Route,
 	return routes, nil
 }
 
-func (g *GoBGPClient) UpdatePath(ctx context.Context, prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
+func (g *GoBGPClient) UpdatePaths(ctx context.Context, routes []Route) error {
 	// Set up the stream
 	stream, err := g.client.AddPathStream(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to open AddPathStream: %w", err)
 	}
 
-	// Marshal NLRI (route information) into *anypb.Any
-	nlri, err := anypb.New(&api.IPAddressPrefix{
-		Prefix:    prefix,
-		PrefixLen: prefixLength,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal NLRI: %w", err)
-	}
+	paths := make([]*api.Path, len(routes))
+	for i := range routes {
+		// Marshal NLRI (route information) into *anypb.Any
+		nlri, err := anypb.New(&api.IPAddressPrefix{
+			Prefix:    routes[i].Prefix,
+			PrefixLen: routes[i].PrefixLength,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to marshal NLRI: %w", err)
+		}
 
-	// Marshal the attributes (Pattrs) into *anypb.Any
-	originAttr, err := anypb.New(&api.OriginAttribute{
-		Origin: origin,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal origin attribute: %w", err)
-	}
+		// Marshal the attributes (Pattrs) into *anypb.Any
+		originAttr, err := anypb.New(&api.OriginAttribute{
+			Origin: routes[i].Origin,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to marshal origin attribute: %w", err)
+		}
 
-	// Prepare a list of paths, one for each next-hop
-	paths := make([]*api.Path, len(nextHops))
-	for i := range nextHops {
 		// Marshal the NextHop attribute into *anypb.Any
 		nextHopAttr, err := anypb.New(&api.NextHopAttribute{
-			NextHop: nextHops[i],
+			NextHop: routes[i].NextHop,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to marshal next-hop attribute: %w", err)
@@ -270,7 +269,7 @@ func (g *GoBGPClient) UpdatePath(ctx context.Context, prefix string, nextHops []
 				originAttr,
 				nextHopAttr,
 			},
-			Identifier: identifier,
+			Identifier: routes[i].Identifier,
 		}
 	}
 
