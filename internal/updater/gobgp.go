@@ -74,43 +74,43 @@ func (g *GoBGPClient) GetBGP() (string, error) {
 }
 
 // AddPaths adds multiple BGP routes (prefixes) with associated next-hops to the GoBGP server.
-func (g *GoBGPClient) AddPaths(ctx context.Context, prefix string, nextHops []string, prefixLength, origin, identifier uint32) error {
+func (g *GoBGPClient) AddPaths(ctx context.Context, routes []Route) error {
 	// Set up the stream
 	stream, err := g.client.AddPathStream(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to open AddPathStream: %w", err)
 	}
 
-	// Marshal NLRI (route information) into *anypb.Any
-	nlri, err := anypb.New(&api.IPAddressPrefix{
-		Prefix:    prefix,
-		PrefixLen: prefixLength,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal NLRI: %w", err)
-	}
+	// Create a stream paths request from routes slice
+	paths := make([]*api.Path, len(routes))
+	for i := range routes {
+		// Marshal NLRI (route information) into *anypb.Any
+		nlri, err := anypb.New(&api.IPAddressPrefix{
+			Prefix:    routes[i].Prefix,
+			PrefixLen: routes[i].PrefixLength,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to marshal NLRI: %w", err)
+		}
 
-	// Marshal the attributes (Pattrs) into *anypb.Any
-	originAttr, err := anypb.New(&api.OriginAttribute{
-		Origin: origin,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal origin attribute: %w", err)
-	}
+		// Marshal the attributes (Pattrs) into *anypb.Any
+		originAttr, err := anypb.New(&api.OriginAttribute{
+			Origin: routes[i].Origin,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to marshal origin attribute: %w", err)
+		}
 
-	// Prepare a list of paths, one for each next-hop
-	paths := make([]*api.Path, len(nextHops))
-	for i := range nextHops {
 		// Marshal the NextHop attribute into *anypb.Any
 		nextHopAttr, err := anypb.New(&api.NextHopAttribute{
-			NextHop: nextHops[i],
+			NextHop: routes[i].NextHop,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to marshal next-hop attribute: %w", err)
 		}
 
 		// Construct each Path object
-		paths[i] = &api.Path{
+		path := &api.Path{
 			Family: &api.Family{
 				Afi:  api.Family_AFI_IP,
 				Safi: api.Family_SAFI_UNICAST,
@@ -120,8 +120,10 @@ func (g *GoBGPClient) AddPaths(ctx context.Context, prefix string, nextHops []st
 				originAttr,
 				nextHopAttr,
 			},
-			Identifier: identifier,
+			Identifier: routes[i].Identifier,
 		}
+
+		paths[i] = path
 	}
 
 	// Construct the AddPathStreamRequest with multiple paths
@@ -131,7 +133,7 @@ func (g *GoBGPClient) AddPaths(ctx context.Context, prefix string, nextHops []st
 
 	// Send the request through the gRPC stream
 	if err := stream.Send(req); err != nil {
-		return fmt.Errorf("failed to send path in AddPathStream: %w", err)
+		return fmt.Errorf("failed to send paths in AddPathStream: %w", err)
 	}
 
 	// Close the stream and receive the server's response
