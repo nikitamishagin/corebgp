@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/nikitamishagin/corebgp/internal/model"
 	api "github.com/osrg/gobgp/v3/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -146,7 +145,7 @@ func (g *GoBGPClient) AddPaths(ctx context.Context, prefix string, nextHops []st
 
 // ListPath retrieves a list of BGP routes for the specified prefixes from the GoBGP server.
 // Returns a slice of Route structures or an error.
-func (g *GoBGPClient) ListPath(ctx context.Context, prefixes []string) ([]model.Route, error) {
+func (g *GoBGPClient) ListPath(ctx context.Context, prefixes []string) ([]Route, error) {
 	// Build the list of prefixes for the API request.
 	lookupPrefixes := make([]*api.TableLookupPrefix, len(prefixes))
 	for i := range prefixes {
@@ -169,7 +168,7 @@ func (g *GoBGPClient) ListPath(ctx context.Context, prefixes []string) ([]model.
 	}
 
 	// Collect routes from the stream
-	var routes []model.Route
+	var routes []Route
 	for {
 		resp, err := stream.Recv()
 		if err != nil {
@@ -215,7 +214,7 @@ func (g *GoBGPClient) ListPath(ctx context.Context, prefixes []string) ([]model.
 			}
 
 			// Parse the attributes into the Route structure
-			route := model.Route{
+			route := Route{
 				Prefix:       prefix.String(),
 				PrefixLength: uint32(prefixLength),
 				NextHop:      nextHopAttr.NextHop,

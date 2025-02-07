@@ -22,8 +22,8 @@ func RootCmd() *cobra.Command {
 			defer cancel()
 
 			// Create channels for routes
-			apiRoutesChan := make(chan []model.Route, 1)
-			controllerRoutesChan := make(chan []model.Route, 1)
+			apiRoutesChan := make(chan []Route, 1)
+			controllerRoutesChan := make(chan []Route, 1)
 
 			for {
 				// Initialize the new GoBGP client

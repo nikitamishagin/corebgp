@@ -1,4 +1,4 @@
-package model
+package updater
 
 // Route represents a GoBGP route with its prefix, prefix length, next hop IP, origin, and a unique identifier.
 type Route struct {
