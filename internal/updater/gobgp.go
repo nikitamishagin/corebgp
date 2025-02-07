@@ -293,11 +293,11 @@ func (g *GoBGPClient) UpdatePaths(ctx context.Context, routes []Route) error {
 }
 
 // DeletePath removes a specified BGP route (prefix) from GoBGP
-func (g *GoBGPClient) DeletePath(ctx context.Context, prefix string, nextHops string, prefixLength, origin, identifier uint32) error {
+func (g *GoBGPClient) DeletePath(ctx context.Context, route Route) error {
 	// Marshal the NLRI (route information) into *anypb.Any
 	nlri, err := anypb.New(&api.IPAddressPrefix{
-		Prefix:    prefix,
-		PrefixLen: prefixLength,
+		Prefix:    route.Prefix,
+		PrefixLen: route.PrefixLength,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal NLRI for deletion: %w", err)
@@ -305,7 +305,7 @@ func (g *GoBGPClient) DeletePath(ctx context.Context, prefix string, nextHops st
 
 	// Marshal the attributes (Pattrs) into *anypb.Any
 	originAttr, err := anypb.New(&api.OriginAttribute{
-		Origin: origin,
+		Origin: route.Origin,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal origin attribute: %w", err)
@@ -313,7 +313,7 @@ func (g *GoBGPClient) DeletePath(ctx context.Context, prefix string, nextHops st
 
 	// Marshal the NextHop attribute into *anypb.Any (if required)
 	nextHopAttr, err := anypb.New(&api.NextHopAttribute{
-		NextHop: nextHops,
+		NextHop: route.NextHop,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal next-hop attribute for deletion: %w", err)
@@ -330,7 +330,7 @@ func (g *GoBGPClient) DeletePath(ctx context.Context, prefix string, nextHops st
 			originAttr,
 			nextHopAttr,
 		},
-		Identifier: identifier,
+		Identifier: route.Identifier,
 	}
 
 	// Call DeletePath API with the constructed path
