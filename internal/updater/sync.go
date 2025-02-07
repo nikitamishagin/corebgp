@@ -8,6 +8,7 @@ import (
 	"sync"
 )
 
+// fetchAPIRoutes fetches all route data from the API and sends the resulting route map to the specified channel.
 func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APIClient, apiRoutesChan chan<- map[string]Route) error {
 	defer wg.Done()
 	defer close(apiRoutesChan)
@@ -56,33 +57,45 @@ func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APICl
 			}
 		}
 	}
+
+	// Send the constructed route map to the provided channel.
 	apiRoutesChan <- routeMap
 	return nil
 }
 
+// fetchControllerRoutes fetches all controller routes from the GoBGP server and sends them to the provided channel.
 func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient *GoBGPClient, controllerRoutesChan chan<- map[string]Route) error {
 	defer wg.Done()
 	defer close(controllerRoutesChan)
 
 	fmt.Println("Fetching all routes from GoBGP...")
 
+	// Fetch all routes from the GoBGP server using a wildcard prefix ("0.0.0.0/0").
 	routes, err := goBGPClient.ListPath(ctx, []string{"0.0.0.0/0"})
 	if err != nil {
+		// If there's an error, send an empty route map and return the error.
 		controllerRoutesChan <- map[string]Route{}
 		return fmt.Errorf("failed to fetch routes from GoBGP: %w", err)
 	}
+
+	// If no routes are returned, log the information and send an empty map to the channel.
 	if len(routes) == 0 {
 		controllerRoutesChan <- map[string]Route{}
 		fmt.Println("No routes found in GoBGP.")
 		return nil
 	}
 
+	// Initialize a map to store routes with unique keys.
 	routeMap := make(map[string]Route)
 	for i := range routes {
-		// Create a new key and write to map
+		// Create a unique key for each route using its prefix, prefix length, and next hop.
 		key := fmt.Sprintf("%s/%d-%v", routes[i].Prefix, routes[i].PrefixLength, routes[i].NextHop)
+
 		routeMap[key] = routes[i]
 	}
+
+	// Send the constructed route map to the provided channel.
+	controllerRoutesChan <- routeMap
 	return nil
 }
 
