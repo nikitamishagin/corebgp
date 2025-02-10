@@ -3,6 +3,7 @@ package updater
 import (
 	"context"
 	"fmt"
+	"github.com/nikitamishagin/corebgp/internal/model"
 	v1 "github.com/nikitamishagin/corebgp/pkg/client/v1"
 	"net"
 	"sync"
@@ -172,4 +173,54 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 
 	fmt.Println("Route synchronization completed.")
 	return nil
+}
+
+func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, routeUpdates chan<- RouteUpdate) {
+	err := apiClient.WatchAnnouncements(ctx, func(event model.Event) {
+		for i := range event.Announcement.NextHops {
+			routeUpdate := RouteUpdate{
+				Type: event.Type,
+				Route: Route{
+					Prefix:       event.Announcement.Addresses.AnnouncedIP,
+					PrefixLength: 32,
+					NextHop:      event.Announcement.NextHops[i],
+					Origin:       0,
+					Identifier:   uint32(i),
+				},
+			}
+			routeUpdates <- routeUpdate
+		}
+
+	})
+	if err != nil {
+		fmt.Printf("error while watching announcements: %v\n", err)
+		cancel() // Cancel the context in case of an error
+	}
+}
+
+func routesHanding(ctx context.Context, client *GoBGPClient, routeUpdates <-chan RouteUpdate) {
+	for routeUpdate := range routeUpdates {
+		fmt.Printf("Processing event: type=%s, prefix=%s, next-hop=%s\n", routeUpdate.Type, routeUpdate.Route.Prefix, routeUpdate.Route.NextHop)
+
+		// Handle the event based on the Type
+		switch routeUpdate.Type {
+		case model.EventAdded:
+			err := client.AddPaths(ctx, []Route{routeUpdate.Route})
+			if err != nil {
+				fmt.Printf("failed to add route %s via %v: %v\n", routeUpdate.Route.Prefix, routeUpdate.Route.NextHop, err)
+			}
+		case model.EventUpdated:
+			err := client.UpdatePaths(ctx, []Route{routeUpdate.Route})
+			if err != nil {
+				fmt.Printf("failed to update route %s via %v: %v\n", routeUpdate.Route.Prefix, routeUpdate.Route.NextHop, err)
+			}
+		case model.EventDeleted:
+			err := client.DeletePath(ctx, routeUpdate.Route)
+			if err != nil {
+				fmt.Printf("failed to delete route %s via %v: %v\n", routeUpdate.Route.Prefix, routeUpdate.Route.NextHop, err)
+			}
+		default:
+			fmt.Printf("unrecognized event type: %s\n", routeUpdate.Type)
+		}
+	}
 }
