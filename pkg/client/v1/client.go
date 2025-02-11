@@ -313,7 +313,7 @@ func (c *APIClient) WatchAnnouncements(ctx context.Context, onEvent func(event m
 	}
 
 	// Append the path for WebSocket announcements
-	parsedURL.Path = "/v1/announcements/watch"
+	parsedURL.Path = "/v1/watch/announcements/"
 
 	// Build the WebSocket URL
 	webSocketURL := parsedURL.String()
