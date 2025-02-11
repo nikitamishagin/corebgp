@@ -13,6 +13,8 @@ import (
 	"github.com/nikitamishagin/corebgp/internal/model"
 )
 
+// TODO: Rewrite api responses
+
 // APIClient represents the client for interacting with the API server.
 type APIClient struct {
 	baseURL    string
