@@ -178,6 +178,10 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, routeUpdates chan<- RouteUpdate) {
 	err := apiClient.WatchAnnouncements(ctx, func(event model.Event) {
 		for i := range event.Announcement.NextHops {
+			if !event.Announcement.Status[i].Health {
+				continue
+			}
+
 			routeUpdate := RouteUpdate{
 				Type: event.Type,
 				Route: Route{
