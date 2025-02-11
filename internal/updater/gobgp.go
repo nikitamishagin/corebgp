@@ -200,16 +200,25 @@ func (g *GoBGPClient) ListPath(ctx context.Context, prefixes []string) ([]Route,
 			)
 			// Find next hop and origin in attributes
 			for _, attr := range dest.Paths[i].GetPattrs() {
-				// Attempt to unmarshal the attribute into OriginAttribute
-				err = attr.UnmarshalTo(&originAttr)
-				if err != nil {
-					fmt.Printf("error parsing origin attribute for %s prefix: %v\n", dest.Prefix, err)
-				}
-
-				// Attempt to unmarshal the attribute into NextHopAttribute
-				err := attr.UnmarshalTo(&nextHopAttr)
-				if err == nil && nextHopAttr.NextHop != "" {
-					break // Found the next hop, stop further processing
+				// Check the type URL of the attribute
+				switch attr.GetTypeUrl() {
+				case "type.googleapis.com/apipb.OriginAttribute":
+					// Attempt to unmarshal the OriginAttribute
+					err := attr.UnmarshalTo(&originAttr)
+					if err != nil {
+						fmt.Printf("error parsing origin attribute for %s prefix: %v\n", dest.Prefix, err)
+					}
+				case "type.googleapis.com/apipb.NextHopAttribute":
+					// Attempt to unmarshal the NextHopAttribute
+					err := attr.UnmarshalTo(&nextHopAttr)
+					if err != nil {
+						fmt.Printf("error parsing next-hop attribute for %s prefix: %v\n", dest.Prefix, err)
+					}
+					if err == nil && nextHopAttr.NextHop != "" {
+						break // Found the next hop, stop further processing
+					}
+				default:
+					fmt.Printf("unknown attribute type %s for %s prefix\n", attr.GetTypeUrl(), dest.Prefix)
 				}
 			}
 
