@@ -202,7 +202,9 @@ func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClien
 	}
 }
 
-func routesHanding(ctx context.Context, client *GoBGPClient, routeUpdates <-chan RouteUpdate) {
+func routesHanding(ctx context.Context, wg *sync.WaitGroup, client *GoBGPClient, routeUpdates <-chan RouteUpdate) {
+	defer wg.Done()
+
 	for routeUpdate := range routeUpdates {
 		fmt.Printf("Processing event: type=%s, prefix=%s, next-hop=%s\n", routeUpdate.Type, routeUpdate.Route.Prefix, routeUpdate.Route.NextHop)
 
