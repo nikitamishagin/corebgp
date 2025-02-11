@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/nikitamishagin/corebgp/internal/model"
 )
 
@@ -49,244 +49,254 @@ func (c *APIClient) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// ListAnnouncements returns a list of announcement IDs from the API (globally).
-func (c *APIClient) ListAnnouncements(ctx context.Context) ([]string, error) {
+// ListAnnouncements returns a list of announcement paths (IDs) globally.
+func (c *APIClient) ListAnnouncements(ctx context.Context) (model.APIResponse, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/", c.baseURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 	defer resp.Body.Close()
 
+	var apiResponse model.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return model.APIResponse{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to list announcements: status code %d", resp.StatusCode)
+		return apiResponse, fmt.Errorf("failed to list announcements: status code %d", resp.StatusCode)
 	}
 
-	var response struct {
-		Announcements []string `json:"announcements"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %v", err)
-	}
-
-	return response.Announcements, nil
+	return apiResponse, nil
 }
 
-// GetAllAnnouncements returns a list of all announcements from the API (globally).
-func (c *APIClient) GetAllAnnouncements(ctx context.Context) ([]model.Announcement, error) {
+// GetAllAnnouncements retrieves all announcements globally.
+func (c *APIClient) GetAllAnnouncements(ctx context.Context) (model.APIResponse, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/all", c.baseURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 	defer resp.Body.Close()
 
+	var apiResponse model.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return model.APIResponse{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to list all announcements: status code %d", resp.StatusCode)
+		return apiResponse, fmt.Errorf("failed to fetch all announcements: status code %d", resp.StatusCode)
 	}
 
-	var announcements []model.Announcement
-	if err := json.NewDecoder(resp.Body).Decode(&announcements); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %v", err)
-	}
-
-	return announcements, nil
+	return apiResponse, nil
 }
 
-// ListAnnouncementsByProject returns a list of announcement IDs from the API for the specified project.
-func (c *APIClient) ListAnnouncementsByProject(ctx context.Context, project string) ([]string, error) {
+// ListAnnouncementsByProject retrieves announcement paths for a given project.
+func (c *APIClient) ListAnnouncementsByProject(ctx context.Context, project string) (model.APIResponse, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/", c.baseURL, project)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 	defer resp.Body.Close()
 
+	var apiResponse model.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return model.APIResponse{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to list announcements for project: status code %d", resp.StatusCode)
+		return apiResponse, fmt.Errorf("failed to list announcements for project %s: status code %d", project, resp.StatusCode)
 	}
 
-	var response struct {
-		Announcements []string `json:"announcements"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %v", err)
-	}
-
-	return response.Announcements, nil
+	return apiResponse, nil
 }
 
-// GetAllAnnouncementsByProject returns a list of all announcements from the API for the specified project.
-func (c *APIClient) GetAllAnnouncementsByProject(ctx context.Context, project string) ([]model.Announcement, error) {
+// GetAllAnnouncementsByProject retrieves all announcements for a project.
+func (c *APIClient) GetAllAnnouncementsByProject(ctx context.Context, project string) (model.APIResponse, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/all", c.baseURL, project)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 	defer resp.Body.Close()
 
+	var apiResponse model.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return model.APIResponse{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to list all announcements for project: status code %d", resp.StatusCode)
+		return apiResponse, fmt.Errorf("failed to fetch announcements for project %s: status code %d", project, resp.StatusCode)
 	}
 
-	var announcements []model.Announcement
-	if err := json.NewDecoder(resp.Body).Decode(&announcements); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %v", err)
-	}
-
-	return announcements, nil
+	return apiResponse, nil
 }
 
-// GetAnnouncement retrieves an announcement by project and name.
-func (c *APIClient) GetAnnouncement(ctx context.Context, project, name string) (*model.Announcement, error) {
+// GetAnnouncement retrieves a specific announcement.
+func (c *APIClient) GetAnnouncement(ctx context.Context, project, name string) (model.APIResponse, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", baseURL, nil)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return model.APIResponse{}, err
 	}
 	defer resp.Body.Close()
 
+	var apiResponse model.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return model.APIResponse{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("announcement not found")
+		return apiResponse, fmt.Errorf("announcement not found")
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch announcement: status code %d", resp.StatusCode)
+		return apiResponse, fmt.Errorf("failed to fetch announcement: status code %d", resp.StatusCode)
 	}
 
-	var announcement model.Announcement
-	if err := json.NewDecoder(resp.Body).Decode(&announcement); err != nil {
-		return nil, fmt.Errorf("failed to decode announcement: %v", err)
-	}
-
-	return &announcement, nil
+	return apiResponse, nil
 }
 
 // CreateAnnouncement creates a new announcement.
-func (c *APIClient) CreateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
-	baseURL := c.baseURL + "/v1/announcements/"
+func (c *APIClient) CreateAnnouncement(ctx context.Context, announcement *model.Announcement) (model.APIResponse, error) {
+	baseURL := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, announcement.Meta.Project, announcement.Meta.Name)
 
 	data, err := json.Marshal(announcement)
 	if err != nil {
-		return err
+		return model.APIResponse{}, fmt.Errorf("failed to marshal announcement: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", baseURL, bytes.NewBuffer(data))
 	if err != nil {
-		return err
+		return model.APIResponse{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return model.APIResponse{}, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
+	var apiResponse model.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return model.APIResponse{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
 	if resp.StatusCode == http.StatusConflict {
-		return fmt.Errorf("announcement already exists")
+		return apiResponse, fmt.Errorf("announcement already exists")
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("failed to create announcement: status code %d", resp.StatusCode)
+		return apiResponse, fmt.Errorf("failed to create announcement: status code %d", resp.StatusCode)
 	}
 
-	return nil
+	return apiResponse, nil
 }
 
 // UpdateAnnouncement updates an existing announcement.
-func (c *APIClient) UpdateAnnouncement(ctx context.Context, announcement *model.Announcement) error {
-	baseURL := c.baseURL + "/v1/announcements/"
+func (c *APIClient) UpdateAnnouncement(ctx context.Context, announcement *model.Announcement) (model.APIResponse, error) {
+	baseURL := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, announcement.Meta.Project, announcement.Meta.Name)
 
 	data, err := json.Marshal(announcement)
 	if err != nil {
-		return err
+		return model.APIResponse{}, fmt.Errorf("failed to marshal announcement: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "PATCH", baseURL, bytes.NewBuffer(data))
 	if err != nil {
-		return err
+		return model.APIResponse{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return model.APIResponse{}, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
+	var apiResponse model.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return model.APIResponse{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
 	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("announcement not found")
+		return apiResponse, fmt.Errorf("announcement not found")
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to update announcement: status code %d", resp.StatusCode)
+		return apiResponse, fmt.Errorf("failed to update announcement: status code %d", resp.StatusCode)
 	}
 
-	return nil
+	return apiResponse, nil
 }
 
 // DeleteAnnouncement deletes an announcement by project and name.
-func (c *APIClient) DeleteAnnouncement(ctx context.Context, project, name string) error {
+func (c *APIClient) DeleteAnnouncement(ctx context.Context, project, name string) (model.APIResponse, error) {
 	baseURL := fmt.Sprintf("%s/v1/announcements/%s/%s", c.baseURL, project, name)
 
 	req, err := http.NewRequestWithContext(ctx, "DELETE", baseURL, nil)
 	if err != nil {
-		return err
+		return model.APIResponse{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return model.APIResponse{}, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
+	var apiResponse model.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return model.APIResponse{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
 	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("announcement not found")
+		return apiResponse, fmt.Errorf("announcement not found")
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to delete announcement: status code %d", resp.StatusCode)
+		return apiResponse, fmt.Errorf("failed to delete announcement: status code %d", resp.StatusCode)
 	}
 
-	return nil
+	return apiResponse, nil
 }
 
 // WatchAnnouncements establishes a WebSocket connection to watch announcements.
 func (c *APIClient) WatchAnnouncements(ctx context.Context, onEvent func(event model.Event)) error {
-
 	parsedURL, err := url.Parse(c.baseURL)
 	if err != nil {
 		return fmt.Errorf("failed to parse base URL: %w", err)
@@ -303,7 +313,7 @@ func (c *APIClient) WatchAnnouncements(ctx context.Context, onEvent func(event m
 	}
 
 	// Append the path for WebSocket announcements
-	parsedURL.Path = "/v1/watch/announcements/"
+	parsedURL.Path = "/v1/announcements/watch"
 
 	// Build the WebSocket URL
 	webSocketURL := parsedURL.String()
@@ -312,7 +322,7 @@ func (c *APIClient) WatchAnnouncements(ctx context.Context, onEvent func(event m
 	dialer := websocket.Dialer{}
 	conn, _, err := dialer.DialContext(ctx, webSocketURL, nil)
 	if err != nil {
-		return fmt.Errorf("failed to establish websocket connection: %w", err)
+		return fmt.Errorf("failed to establish WebSocket connection: %w", err)
 	}
 	defer conn.Close()
 
@@ -324,12 +334,14 @@ func (c *APIClient) WatchAnnouncements(ctx context.Context, onEvent func(event m
 		for {
 			_, message, err := conn.ReadMessage()
 			if err != nil {
+				// WebSocket error or client disconnected
+				fmt.Printf("websocket connection error: %v\n", err)
 				return
 			}
 
 			var event model.Event
 			if err := json.Unmarshal(message, &event); err != nil {
-				fmt.Printf("failed to unmarshal websocket message: %v\n", err)
+				fmt.Printf("failed to unmarshal WebSocket message: %v\n", err)
 				continue
 			}
 
@@ -337,6 +349,7 @@ func (c *APIClient) WatchAnnouncements(ctx context.Context, onEvent func(event m
 		}
 	}()
 
+	// Wait until the connection is closed.
 	<-done
 	return nil
 }
