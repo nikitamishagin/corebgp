@@ -17,19 +17,18 @@ func RootCmd() *cobra.Command {
 		Use:   "updater",
 		Short: "CoreBGP update controller",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Create a context with cancel function for managing the goroutines
-			ctx, cancel := context.WithCancel(cmd.Context())
-			defer cancel()
-
 			for {
+				// Create a context with cancel function for managing the goroutines
+				ctx, cancel := context.WithCancel(cmd.Context())
+
 				// Initialize the new GoBGP client
 				goBGPClient, err := NewGoBGPClient(&config.GoBGPEndpoint, &config.GoBGPCACert, &config.GoBGPClientCert, &config.GoBGPClientKey)
 				if err != nil {
 					fmt.Printf("Failed to connect to GoBGP: %v. Retrying...\n", err)
+					cancel()
 					time.Sleep(5 * time.Second) // Retry interval
 					continue
 				}
-				defer goBGPClient.Close()
 
 				// TODO: Implement GoBGP configuration checking
 
@@ -43,7 +42,6 @@ func RootCmd() *cobra.Command {
 
 				// Create a channel to process routeUpdates
 				routeUpdates := make(chan RouteUpdate, 100) // Buffered channel to handle updates
-				defer close(routeUpdates)
 
 				go watchAnnouncements(ctx, cancel, apiClient, routeUpdates)
 
@@ -72,6 +70,8 @@ func RootCmd() *cobra.Command {
 				go routesHanding(ctx, &wg, goBGPClient, routeUpdates)
 				wg.Wait()
 
+				close(routeUpdates)
+				goBGPClient.Close()
 			}
 		},
 	}
