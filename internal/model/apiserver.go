@@ -9,17 +9,29 @@ const (
 	EventDeleted EventType = "deleted" // EventDeleted represents the event type for deleting an existing announcement.
 )
 
-// Event represents a BGP announcement event, encapsulating the type of action and the specific announcement.
-type Event struct {
-	Type         EventType    `json:"type"`         // Action specifies the type of event: add, update, or delete.
-	Announcement Announcement `json:"announcement"` // Announcement is the BGP announcement data associated with the event.
+// WatchEvent represents a BGP announcement event, encapsulating the type of action and the specific announcement.
+type WatchEvent struct {
+	Type    EventType    `json:"type"`         // Action specifies the type of event: add, update, or delete.
+	Message string       `json:"message"`      // Message provides additional details about the result of the API call.
+	Data    Announcement `json:"announcement"` // Data represents the announcement details.
 }
 
-// APIResponse represents a standard response structure for API calls.
-type APIResponse struct {
-	Status  string      `json:"status"`  // Status indicates the operation outcome: success or error.
-	Message string      `json:"message"` // Message provides additional details about the result of the API call.
-	Data    interface{} `json:"data"`    // Data contains the response payload, which can vary depending on the endpoint.
+// ListAnnouncementsResponse represents the response structure for listing announcements.
+type ListAnnouncementsResponse struct {
+	Message string   `json:"message"` // Message provides additional details about the result of the API call.
+	Data    []string `json:"data"`    // Data contains a list of prefixes.
+}
+
+// GetAnnouncementsResponse represents the structure for the API response containing announcements and a message.
+type GetAnnouncementsResponse struct {
+	Message string         `json:"message"` // Message provides additional details about the result of the API call.
+	Data    []Announcement `json:"data"`    // Data contains a list of announcements.
+}
+
+// AnnouncementResponse represents the response structure for an announcement API call, including message and data details.
+type AnnouncementResponse struct {
+	Message string       `json:"message"` // Message provides additional details about the result of the API call.
+	Data    Announcement `json:"data"`    // Data represents the announcement details.
 }
 
 // Announcement represents a BGP routing configuration, including metadata, addresses, next-hop details, health checks, and status.

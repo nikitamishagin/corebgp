@@ -22,7 +22,7 @@ func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APICl
 		apiRoutesChan <- map[string]Route{}
 		return fmt.Errorf("failed to fetch routes from API: %w", err)
 	}
-	if len(announcements) == 0 {
+	if len(announcements.Data) == 0 {
 		apiRoutesChan <- map[string]Route{}
 		fmt.Println("No routes found in API.")
 		return nil
@@ -30,9 +30,9 @@ func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APICl
 
 	// Convert announcement information to routes
 	routeMap := make(map[string]Route)
-	for i := range announcements {
+	for i := range announcements.Data {
 		// Parse announced IP
-		ip, ipNet, err := net.ParseCIDR(announcements[i].Addresses.AnnouncedIP)
+		ip, ipNet, err := net.ParseCIDR(announcements.Data[i].Addresses.AnnouncedIP)
 		if err != nil {
 			fmt.Printf("error parsing announced IP: %v\n", err)
 			continue
@@ -40,14 +40,14 @@ func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APICl
 		mask, _ := ipNet.Mask.Size()
 
 		// Convert announcement information to routes
-		for j := range announcements[i].Status {
+		for j := range announcements.Data[i].Status {
 			// Get healthy next hops from announcement status
-			if announcements[i].Status[j].Health {
+			if announcements.Data[i].Status[j].Health {
 				// Make route object
 				route := Route{
 					Prefix:       ip.String(),
 					PrefixLength: uint32(mask),
-					NextHop:      announcements[i].Status[j].NextHop,
+					NextHop:      announcements.Data[i].Status[j].NextHop,
 					Origin:       0,
 					Identifier:   uint32(j),
 				}
@@ -176,18 +176,18 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 }
 
 func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, routeUpdates chan<- RouteUpdate) {
-	err := apiClient.WatchAnnouncements(ctx, func(event model.Event) {
-		for i := range event.Announcement.NextHops {
-			if !event.Announcement.Status[i].Health {
+	err := apiClient.WatchAnnouncements(ctx, func(event model.WatchEvent) {
+		for i := range event.Data.NextHops {
+			if !event.Data.Status[i].Health {
 				continue
 			}
 
 			routeUpdate := RouteUpdate{
 				Type: event.Type,
 				Route: Route{
-					Prefix:       event.Announcement.Addresses.AnnouncedIP,
+					Prefix:       event.Data.Addresses.AnnouncedIP,
 					PrefixLength: 32,
-					NextHop:      event.Announcement.NextHops[i],
+					NextHop:      event.Data.NextHops[i],
 					Origin:       0,
 					Identifier:   uint32(i),
 				},

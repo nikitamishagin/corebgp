@@ -28,16 +28,14 @@ func (h *Handler) ListAnnouncements(c *gin.Context) {
 
 	announcementList, err := h.DB.List(prefix)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.ListAnnouncementsResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, model.APIResponse{
-		Status:  "success",
+	c.JSON(http.StatusOK, model.ListAnnouncementsResponse{
 		Message: "Announcements retrieved successfully",
 		Data:    announcementList,
 	})
@@ -49,8 +47,7 @@ func (h *Handler) GetAllAnnouncements(c *gin.Context) {
 
 	data, err := h.DB.GetObjects(prefix)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.GetAnnouncementsResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
@@ -62,8 +59,7 @@ func (h *Handler) GetAllAnnouncements(c *gin.Context) {
 		var announcement model.Announcement
 		err = json.Unmarshal([]byte(value), &announcement)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, model.APIResponse{
-				Status:  "error",
+			c.JSON(http.StatusInternalServerError, model.GetAnnouncementsResponse{
 				Message: "failed to unmarshal announcement",
 				Data:    nil,
 			})
@@ -72,8 +68,7 @@ func (h *Handler) GetAllAnnouncements(c *gin.Context) {
 		announcements = append(announcements, announcement)
 	}
 
-	c.JSON(http.StatusOK, model.APIResponse{
-		Status:  "success",
+	c.JSON(http.StatusOK, model.GetAnnouncementsResponse{
 		Message: "Announcements retrieved successfully",
 		Data:    announcements,
 	})
@@ -87,16 +82,14 @@ func (h *Handler) ListAnnouncementsByProject(c *gin.Context) {
 
 	announcementList, err := h.DB.List(prefix)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.ListAnnouncementsResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, model.APIResponse{
-		Status:  "success",
+	c.JSON(http.StatusOK, model.ListAnnouncementsResponse{
 		Message: "Announcements retrieved successfully",
 		Data:    announcementList,
 	})
@@ -110,8 +103,7 @@ func (h *Handler) GetAllAnnouncementsByProject(c *gin.Context) {
 
 	data, err := h.DB.GetObjects(prefix)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.GetAnnouncementsResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
@@ -123,8 +115,7 @@ func (h *Handler) GetAllAnnouncementsByProject(c *gin.Context) {
 		var announcement model.Announcement
 		err = json.Unmarshal([]byte(value), &announcement)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, model.APIResponse{
-				Status:  "error",
+			c.JSON(http.StatusInternalServerError, model.GetAnnouncementsResponse{
 				Message: "failed to unmarshal announcement",
 				Data:    nil,
 			})
@@ -133,8 +124,7 @@ func (h *Handler) GetAllAnnouncementsByProject(c *gin.Context) {
 		announcements = append(announcements, announcement)
 	}
 
-	c.JSON(http.StatusOK, model.APIResponse{
-		Status:  "success",
+	c.JSON(http.StatusOK, model.GetAnnouncementsResponse{
 		Message: "Announcements retrieved successfully",
 		Data:    announcements,
 	})
@@ -150,19 +140,17 @@ func (h *Handler) GetAnnouncement(c *gin.Context) {
 
 	data, err := h.DB.Get(prefix)
 	if err != nil && err.Error() == "key not found" {
-		c.JSON(http.StatusNotFound, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusNotFound, model.AnnouncementResponse{
 			Message: "announcement not found",
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: err.Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
@@ -170,16 +158,14 @@ func (h *Handler) GetAnnouncement(c *gin.Context) {
 	var announcement model.Announcement
 	err = json.Unmarshal([]byte(data), &announcement)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: "failed to unmarshal announcement",
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, model.APIResponse{
-		Status:  "success",
+	c.JSON(http.StatusOK, model.AnnouncementResponse{
 		Message: "Announcement retrieved successfully",
 		Data:    announcement,
 	})
@@ -189,10 +175,9 @@ func (h *Handler) GetAnnouncement(c *gin.Context) {
 func (h *Handler) PostAnnouncement(c *gin.Context) {
 	var announcement model.Announcement
 	if err := c.ShouldBindJSON(&announcement); err != nil {
-		c.JSON(http.StatusBadRequest, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusBadRequest, model.AnnouncementResponse{
 			Message: err.Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
@@ -200,49 +185,41 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 	prefix := "v1/announcements/" + announcement.Meta.Project + "/" + announcement.Meta.Name
 	_, err := h.DB.Get(prefix)
 	if err == nil {
-		c.JSON(http.StatusConflict, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusConflict, model.AnnouncementResponse{
 			Message: "announcement already exists",
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 	if err.Error() != "key not found" {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: fmt.Errorf("failed to check announcement existence: %w", err).Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
 	data, err := json.Marshal(announcement)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: err.Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
 	err = h.DB.Put(prefix, string(data))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: fmt.Errorf("failed to write announcement: %w", err).Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, model.APIResponse{
-		Status:  "success",
+	c.JSON(http.StatusCreated, model.AnnouncementResponse{
 		Message: "Announcement created successfully",
-		Data: model.Event{
-			Type:         model.EventAdded,
-			Announcement: announcement,
-		},
+		Data:    announcement,
 	})
 }
 
@@ -250,10 +227,9 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 func (h *Handler) PatchAnnouncements(c *gin.Context) {
 	var announcement model.Announcement
 	if err := c.ShouldBindJSON(&announcement); err != nil {
-		c.JSON(http.StatusBadRequest, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusBadRequest, model.AnnouncementResponse{
 			Message: err.Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
@@ -261,49 +237,41 @@ func (h *Handler) PatchAnnouncements(c *gin.Context) {
 	prefix := "v1/announcements/" + announcement.Meta.Project + "/" + announcement.Meta.Name
 	_, err := h.DB.Get(prefix)
 	if err != nil && err.Error() == "key not found" {
-		c.JSON(http.StatusNotFound, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusNotFound, model.AnnouncementResponse{
 			Message: "announcement not found",
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: err.Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
 	data, err := json.Marshal(announcement)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: err.Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 	}
 
 	err = h.DB.Put(prefix, string(data))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: fmt.Errorf("failed to patch announcement: %w", err).Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, model.APIResponse{
-		Status:  "success",
+	c.JSON(http.StatusOK, model.AnnouncementResponse{
 		Message: "Announcement patched successfully",
-		Data: model.Event{
-			Type:         model.EventUpdated,
-			Announcement: announcement,
-		},
+		Data:    announcement,
 	})
 }
 
@@ -319,10 +287,9 @@ func (h *Handler) WatchAnnouncements(c *gin.Context) {
 	// Upgrade HTTP connection to WebSocket
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.WatchEvent{
 			Message: fmt.Errorf("failed to enseblish WebSocket connection: %w", err).Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
@@ -334,10 +301,9 @@ func (h *Handler) WatchAnnouncements(c *gin.Context) {
 	// Start watching keys with the prefix "/v1/announcements/"
 	eventsChan, err := h.DB.Watch("v1/announcements/", stopChan)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.WatchEvent{
 			Message: fmt.Errorf("failed to start watching: %w", err).Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
@@ -355,28 +321,28 @@ func (h *Handler) WatchAnnouncements(c *gin.Context) {
 	}()
 
 	// Read changes from events and send them to the client
-	for watchResp := range eventsChan {
-		for _, watchEvent := range watchResp.Events {
-			var eventResp model.Event
+	for watchResponse := range eventsChan {
+		for i := range watchResponse.Events {
+			var watchEvent model.WatchEvent
 
-			switch watchEvent.Type {
+			switch watchResponse.Events[i].Type {
 			case clientv3.EventTypePut:
-				if watchEvent.IsCreate() {
-					eventResp.Type = model.EventAdded
+				if watchResponse.Events[i].IsCreate() {
+					watchEvent.Type = model.EventAdded
 				} else {
-					eventResp.Type = model.EventUpdated
+					watchEvent.Type = model.EventUpdated
 				}
 
-				err := json.Unmarshal(watchEvent.Kv.Value, &eventResp.Announcement)
+				err := json.Unmarshal(watchResponse.Events[i].Kv.Value, &watchEvent.Data)
 				if err != nil {
 					fmt.Printf("failed to unmarshal announcement: %v\n", err)
 					continue
 				}
 			case clientv3.EventTypeDelete:
-				eventResp.Type = model.EventDeleted
+				watchEvent.Type = model.EventDeleted
 
-				if watchEvent.PrevKv != nil {
-					err := json.Unmarshal(watchEvent.PrevKv.Value, &eventResp.Announcement)
+				if watchResponse.Events[i].PrevKv != nil {
+					err := json.Unmarshal(watchResponse.Events[i].PrevKv.Value, &watchEvent.Data)
 					if err != nil {
 						fmt.Printf("failed to unmarshal announcement: %v\n", err)
 						continue
@@ -384,8 +350,8 @@ func (h *Handler) WatchAnnouncements(c *gin.Context) {
 				}
 			}
 
-			// Send the eventResp to the client via WebSocket
-			if err := conn.WriteJSON(eventResp); err != nil {
+			// Send the watchEvent to the client via WebSocket
+			if err := conn.WriteJSON(watchEvent); err != nil {
 				return
 			}
 		}
@@ -401,38 +367,31 @@ func (h *Handler) DeleteAnnouncement(c *gin.Context) {
 	prefix := "v1/announcements/" + project + "/" + name
 	_, err := h.DB.Get(prefix)
 	if err != nil && err.Error() == "key not found" {
-		c.JSON(http.StatusNotFound, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusNotFound, model.AnnouncementResponse{
 			Message: "announcement not found",
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: fmt.Errorf("failed to check announcement existence: %w", err).Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 	}
 
 	err = h.DB.Delete(prefix)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.APIResponse{
-			Status:  "error",
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: fmt.Errorf("failed to delete announcement: %w", err).Error(),
-			Data:    nil,
+			Data:    model.Announcement{},
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, model.APIResponse{
-		Status:  "success",
+	c.JSON(http.StatusOK, model.AnnouncementResponse{
 		Message: "Announcement deleted successfully",
-		Data: model.Event{
-			Type:         model.EventDeleted,
-			Announcement: model.Announcement{Meta: model.Meta{Project: project, Name: name}},
-		},
+		Data:    model.Announcement{Meta: model.Meta{Project: project, Name: name}},
 	})
 }
