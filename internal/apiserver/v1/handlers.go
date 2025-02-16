@@ -381,7 +381,7 @@ func (h *Handler) DeleteAnnouncement(c *gin.Context) {
 		})
 	}
 
-	err = h.DB.Delete(prefix)
+	data, err := h.DB.Delete(prefix)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
 			Message: fmt.Errorf("failed to delete announcement: %w", err).Error(),
@@ -390,8 +390,18 @@ func (h *Handler) DeleteAnnouncement(c *gin.Context) {
 		return
 	}
 
+	var announcement model.Announcement
+	err = json.Unmarshal([]byte(data), &announcement)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.AnnouncementResponse{
+			Message: "Announcement deleted successfully, but failed to unmarshal announcement.",
+			Data:    model.Announcement{},
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, model.AnnouncementResponse{
 		Message: "Announcement deleted successfully",
-		Data:    model.Announcement{Meta: model.Meta{Project: project, Name: name}},
+		Data:    announcement,
 	})
 }

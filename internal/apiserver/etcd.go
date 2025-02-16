@@ -97,11 +97,9 @@ func (e *EtcdClient) Put(key, value string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	//log.Printf("Attempting to acquire lock for key: %s\n", key)
 	if err := mutex.Lock(ctx); err != nil {
 		return fmt.Errorf("failed to acquire lock for key %s: %w", key, err)
 	}
-	//log.Printf("Lock acquired for key: %s\n", key)
 
 	// Ensure the lock is released at the end of the function
 	defer mutex.Unlock(ctx)
@@ -168,15 +166,17 @@ func (e *EtcdClient) GetObjects(prefix string) ([]string, error) {
 }
 
 // Delete removes the key-value pair associated with the specified key from the etcd store.
-func (e *EtcdClient) Delete(key string) error {
+func (e *EtcdClient) Delete(key string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := e.client.Delete(ctx, key)
+	resp, err := e.client.Delete(ctx, key, clientv3.WithPrevKV())
 	if err != nil {
-		return fmt.Errorf("failed to delete data from etcd: %w", err)
+		return "", fmt.Errorf("failed to delete data from etcd: %w", err)
 	}
-	return nil
+
+	value := string(resp.PrevKvs[0].Value)
+	return value, nil
 }
 
 // Watch sets up a watch operation on a specified key and streams events through a channel until the stop signal is received.

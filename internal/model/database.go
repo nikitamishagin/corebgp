@@ -11,5 +11,5 @@ type DatabaseAdapter interface {
 	GetObjects(string) ([]string, error)
 	Put(string, string) error
 	Watch(string, <-chan struct{}) (<-chan clientv3.WatchResponse, error)
-	Delete(string) error
+	Delete(string) (string, error)
 }
