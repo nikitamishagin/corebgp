@@ -182,11 +182,18 @@ func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClien
 				continue
 			}
 
+			ip, ipNet, err := net.ParseCIDR(event.Data.Addresses.AnnouncedIP)
+			if err != nil {
+				fmt.Printf("error parsing announced IP: %v\n", err)
+				continue
+			}
+			mask, _ := ipNet.Mask.Size()
+
 			routeUpdate := RouteUpdate{
 				Type: event.Type,
 				Route: Route{
-					Prefix:       event.Data.Addresses.AnnouncedIP,
-					PrefixLength: 32,
+					Prefix:       ip.String(),
+					PrefixLength: uint32(mask),
 					NextHop:      event.Data.NextHops[i],
 					Origin:       0,
 					Identifier:   uint32(i),
