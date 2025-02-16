@@ -66,11 +66,12 @@ func RootCmd() *cobra.Command {
 				// Wait for sync goroutines to finish
 				wg.Wait()
 
+				fmt.Println("Handling routes...")
+
 				wg.Add(1)
 				go routesHanding(ctx, &wg, goBGPClient, routeUpdates)
 				wg.Wait()
 
-				fmt.Println("Updater is running. Performing tasks...")
 			}
 		},
 	}
