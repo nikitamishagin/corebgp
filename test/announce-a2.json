@@ -9,7 +9,7 @@
       "mask": 24
     },
     "zone": "us-central1-a",
-    "announced-ip": "192.168.2.1"
+    "announced-ip": "192.168.2.1/32"
   },
   "next-hops": [
     "192.168.2.3",
