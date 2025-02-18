@@ -1,8 +1,12 @@
 package checker
 
 import (
+	"context"
+	"fmt"
 	"github.com/nikitamishagin/corebgp/internal/model"
+	v1 "github.com/nikitamishagin/corebgp/pkg/client/v1"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 func RootCmd() *cobra.Command {
@@ -12,6 +16,18 @@ func RootCmd() *cobra.Command {
 		Short: "CoreBGP checker",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: Implement checker logic
+			ctx, cancel := context.WithCancel(cmd.Context())
+
+			// Initialize the CoreBGP API client
+			apiClient := v1.NewAPIClient(&config.APIEndpoint, time.Second*5)
+			if err := apiClient.HealthCheck(ctx); err != nil {
+				fmt.Printf("Failed to connect to CoreBGP API: %v. Retrying...\n", err)
+			}
+
+			healthCheckChan := make(chan HealthCheck, 100)
+
+			go watchAnnouncements(ctx, cancel, apiClient, healthCheckChan)
+
 			return nil
 		},
 	}
