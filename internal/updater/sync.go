@@ -176,33 +176,41 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 }
 
 func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, routeUpdates chan<- RouteUpdate) {
+	defer close(routeUpdates)
+
 	err := apiClient.WatchAnnouncements(ctx, func(event model.WatchEvent) {
-		for i := range event.Data.NextHops {
-			if !event.Data.Status[i].Health {
-				continue
-			}
+		select {
+		case <-ctx.Done():
+			fmt.Println("Context canceled, stopping watchAnnouncements...")
+			return
+		default:
+			for i := range event.Data.NextHops {
+				if !event.Data.Status[i].Health {
+					continue
+				}
 
-			ip, ipNet, err := net.ParseCIDR(event.Data.Addresses.AnnouncedIP)
-			if err != nil {
-				fmt.Printf("error parsing announced IP: %v\n", err)
-				continue
-			}
-			mask, _ := ipNet.Mask.Size()
+				ip, ipNet, err := net.ParseCIDR(event.Data.Addresses.AnnouncedIP)
+				if err != nil {
+					fmt.Printf("error parsing announced IP: %v\n", err)
+					continue
+				}
+				mask, _ := ipNet.Mask.Size()
 
-			routeUpdate := RouteUpdate{
-				Type: event.Type,
-				Route: Route{
-					Prefix:       ip.String(),
-					PrefixLength: uint32(mask),
-					NextHop:      event.Data.NextHops[i],
-					Origin:       0,
-					Identifier:   uint32(i),
-				},
+				routeUpdate := RouteUpdate{
+					Type: event.Type,
+					Route: Route{
+						Prefix:       ip.String(),
+						PrefixLength: uint32(mask),
+						NextHop:      event.Data.NextHops[i],
+						Origin:       0,
+						Identifier:   uint32(i),
+					},
+				}
+				routeUpdates <- routeUpdate
 			}
-			routeUpdates <- routeUpdate
 		}
-
 	})
+
 	if err != nil {
 		fmt.Printf("error while watching announcements: %v\n", err)
 		cancel() // Cancel the context in case of an error
