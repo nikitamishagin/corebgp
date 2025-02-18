@@ -34,6 +34,11 @@ func RootCmd() *cobra.Command {
 
 				// Initialize the CoreBGP API client
 				apiClient := v1.NewAPIClient(&config.APIEndpoint, time.Second*5)
+				if err := apiClient.HealthCheck(ctx); err != nil {
+					fmt.Printf("Failed to connect to CoreBGP API: %v. Retrying...\n", err)
+					time.Sleep(5 * time.Second)
+					continue
+				}
 
 				// Periodically check connectivity while the program is running
 				go monitorConnectivity(ctx, goBGPClient, apiClient, cancel)
@@ -70,8 +75,7 @@ func RootCmd() *cobra.Command {
 				go routesHanding(ctx, &wg, goBGPClient, routeUpdates)
 				wg.Wait()
 
-				close(routeUpdates)
-				goBGPClient.Close()
+				fmt.Println("Closing connections...")
 			}
 		},
 	}
@@ -98,8 +102,7 @@ func monitorConnectivity(ctx context.Context, goBGPClient *GoBGPClient, apiClien
 			return
 		case <-ticker.C:
 			// Check GoBGP connectivity
-			_, err := goBGPClient.GetBGP()
-			if err != nil {
+			if _, err := goBGPClient.GetBGP(); err != nil {
 				fmt.Printf("Lost connection to GoBGP: %v\n", err)
 				cancel() // Trigger reconnection
 				return
