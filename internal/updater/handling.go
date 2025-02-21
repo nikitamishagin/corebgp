@@ -175,8 +175,8 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 	return nil
 }
 
-func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, routeUpdates chan<- RouteUpdate) {
-	defer close(routeUpdates)
+func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, routeUpdateChan chan<- RouteUpdate) {
+	defer close(routeUpdateChan)
 
 	err := apiClient.WatchAnnouncements(ctx, func(event model.WatchEvent) {
 		select {
@@ -206,7 +206,7 @@ func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClien
 						Identifier:   uint32(i),
 					},
 				}
-				routeUpdates <- routeUpdate
+				routeUpdateChan <- routeUpdate
 			}
 		}
 	})

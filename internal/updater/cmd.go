@@ -46,9 +46,9 @@ func RootCmd() *cobra.Command {
 				fmt.Println("Connections established. Starting synchronization...")
 
 				// Create a channel to process routeUpdates
-				routeUpdates := make(chan RouteUpdate, 100) // Buffered channel to handle updates
+				routeUpdateChan := make(chan RouteUpdate, 100) // Buffered channel to handle updates
 
-				go watchAnnouncements(ctx, cancel, apiClient, routeUpdates)
+				go watchAnnouncements(ctx, cancel, apiClient, routeUpdateChan)
 
 				// Create channels for routes
 				apiRoutesChan := make(chan map[string]Route, 1)
@@ -72,7 +72,7 @@ func RootCmd() *cobra.Command {
 				fmt.Println("Handling routes...")
 
 				wg.Add(1)
-				go routesHanding(ctx, &wg, goBGPClient, routeUpdates)
+				go routesHanding(ctx, &wg, goBGPClient, routeUpdateChan)
 				wg.Wait()
 
 				fmt.Println("Closing connections...")
