@@ -10,7 +10,7 @@ import (
 )
 
 // fetchAPIRoutes fetches all route data from the API and sends the resulting route map to the specified channel.
-func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APIClient, apiRoutesChan chan<- map[string]Route) error {
+func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APIClient, apiRoutesChan chan<- map[string]Route) {
 	defer wg.Done()
 	defer close(apiRoutesChan)
 
@@ -20,12 +20,13 @@ func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APICl
 	announcements, err := apiClient.GetAllAnnouncements(ctx)
 	if err != nil {
 		apiRoutesChan <- map[string]Route{}
-		return fmt.Errorf("failed to fetch routes from API: %w", err)
+		fmt.Printf("failed to fetch routes from API: %v", err)
+		return
 	}
 	if len(announcements.Data) == 0 {
 		apiRoutesChan <- map[string]Route{}
 		fmt.Println("No routes found in API.")
-		return nil
+		return
 	}
 
 	// Convert announcement information to routes
@@ -61,11 +62,11 @@ func fetchAPIRoutes(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APICl
 
 	// Send the constructed route map to the provided channel.
 	apiRoutesChan <- routeMap
-	return nil
+	return
 }
 
 // fetchControllerRoutes fetches all controller routes from the GoBGP server and sends them to the provided channel.
-func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient *GoBGPClient, controllerRoutesChan chan<- map[string]Route) error {
+func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient *GoBGPClient, controllerRoutesChan chan<- map[string]Route) {
 	defer wg.Done()
 	defer close(controllerRoutesChan)
 
@@ -76,14 +77,15 @@ func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient 
 	if err != nil {
 		// If there's an error, send an empty route map and return the error.
 		controllerRoutesChan <- map[string]Route{}
-		return fmt.Errorf("failed to fetch routes from GoBGP: %w", err)
+		fmt.Printf("failed to fetch routes from GoBGP: %v", err)
+		return
 	}
 
 	// If no routes are returned, log the information and send an empty map to the channel.
 	if len(routes) == 0 {
 		controllerRoutesChan <- map[string]Route{}
 		fmt.Println("No routes found in GoBGP.")
-		return nil
+		return
 	}
 
 	// Initialize a map to store routes with unique keys.
@@ -97,11 +99,11 @@ func fetchControllerRoutes(ctx context.Context, wg *sync.WaitGroup, goBGPClient 
 
 	// Send the constructed route map to the provided channel.
 	controllerRoutesChan <- routeMap
-	return nil
+	return
 }
 
 // synchronizeRoutes synchronizes BGP routes between an API channel and a controller channel using a GoBGP client.
-func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-chan map[string]Route, controllerRoutesChan <-chan map[string]Route, goBGPClient *GoBGPClient) error {
+func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-chan map[string]Route, controllerRoutesChan <-chan map[string]Route, goBGPClient *GoBGPClient) {
 	defer wg.Done()
 
 	var (
@@ -172,7 +174,7 @@ func synchronizeRoutes(ctx context.Context, wg *sync.WaitGroup, apiRoutesChan <-
 	}
 
 	fmt.Println("Route synchronization completed.")
-	return nil
+	return
 }
 
 func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, routeUpdateChan chan<- RouteUpdate) {
