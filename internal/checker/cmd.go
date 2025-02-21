@@ -6,6 +6,7 @@ import (
 	"github.com/nikitamishagin/corebgp/internal/model"
 	v1 "github.com/nikitamishagin/corebgp/pkg/client/v1"
 	"github.com/spf13/cobra"
+	"sync"
 	"time"
 )
 
@@ -27,6 +28,15 @@ func RootCmd() *cobra.Command {
 			healthCheckChan := make(chan HealthCheck, 100)
 
 			go watchAnnouncements(ctx, cancel, apiClient, healthCheckChan)
+
+			// Create channels for routes
+			healthCheckMapChan := make(chan map[string]HealthCheck, 1)
+
+			// Create a WaitGroup to manage goroutines
+			var wg sync.WaitGroup
+
+			wg.Add(1)
+			go fetchHealthChecks(ctx, &wg, apiClient, healthCheckMapChan)
 
 			return nil
 		},
