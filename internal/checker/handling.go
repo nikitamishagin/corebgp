@@ -91,3 +91,20 @@ func fetchTasks(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APIClient
 func calculateDelay(ctx context.Context, cancel context.CancelFunc, healthCheck Task) {
 
 }
+
+func runningTasks(ctx context.Context, wg *sync.WaitGroup, tasksMapChan <-chan map[string]Task, activeTasksChan chan<- map[string]context.CancelFunc) {
+	defer wg.Done()
+
+	tasksMap := <-tasksMapChan
+	for key, task := range tasksMap {
+		ctx, cancel := context.WithCancel(ctx)
+
+		go runTask(ctx, cancel, task)
+		activeTasksChan <- map[string]context.CancelFunc{key: cancel}
+	}
+}
+
+// TODO: Implement running task.
+func runTask(ctx context.Context, cancel context.CancelFunc, task Task) {
+	defer cancel()
+}

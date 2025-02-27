@@ -31,12 +31,17 @@ func RootCmd() *cobra.Command {
 
 			// Create channels for routes
 			tasksMapChan := make(chan map[string]Task, 1)
+			activeTasksChan := make(chan map[string]context.CancelFunc, 1)
 
 			// Create a WaitGroup to manage goroutines
 			var wg sync.WaitGroup
 
 			wg.Add(1)
 			go fetchTasks(ctx, &wg, apiClient, tasksMapChan)
+
+			wg.Add(1)
+			go runningTasks(ctx, &wg, tasksMapChan, activeTasksChan)
+			wg.Wait()
 
 			return nil
 		},
