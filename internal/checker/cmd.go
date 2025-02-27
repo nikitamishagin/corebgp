@@ -25,7 +25,7 @@ func RootCmd() *cobra.Command {
 				fmt.Printf("Failed to connect to CoreBGP API: %v. Retrying...\n", err)
 			}
 
-			taskUpdatesChan := make(chan Task, 100)
+			taskUpdatesChan := make(chan TaskUpdate, 100)
 
 			go watchAnnouncements(ctx, cancel, apiClient, taskUpdatesChan)
 

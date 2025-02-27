@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, taskUpdatesChan chan<- Task) {
+func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, taskUpdatesChan chan<- TaskUpdate) {
 	defer close(taskUpdatesChan)
 
 	err := apiClient.WatchAnnouncements(ctx, func(event model.WatchEvent) {
@@ -18,14 +18,17 @@ func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClien
 			return
 		default:
 			for i := range event.Data.NextHops {
-				taskUpdate := Task{
-					NextHop:       event.Data.NextHops[i],
-					Path:          event.Data.HealthCheck.Path,
-					Port:          event.Data.HealthCheck.Port,
-					Method:        event.Data.HealthCheck.Method,
-					CheckInterval: event.Data.HealthCheck.CheckInterval,
-					Timeout:       event.Data.HealthCheck.Timeout,
-					Delay:         0,
+				taskUpdate := TaskUpdate{
+					Type: event.Type,
+					Tasks: Task{
+						NextHop:       event.Data.NextHops[i],
+						Path:          event.Data.HealthCheck.Path,
+						Port:          event.Data.HealthCheck.Port,
+						Method:        event.Data.HealthCheck.Method,
+						CheckInterval: event.Data.HealthCheck.CheckInterval,
+						Timeout:       event.Data.HealthCheck.Timeout,
+						Delay:         0,
+					},
 				}
 				taskUpdatesChan <- taskUpdate
 			}
