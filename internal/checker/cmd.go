@@ -25,18 +25,18 @@ func RootCmd() *cobra.Command {
 				fmt.Printf("Failed to connect to CoreBGP API: %v. Retrying...\n", err)
 			}
 
-			healthCheckChan := make(chan HealthCheck, 100)
+			taskUpdatesChan := make(chan Task, 100)
 
-			go watchAnnouncements(ctx, cancel, apiClient, healthCheckChan)
+			go watchAnnouncements(ctx, cancel, apiClient, taskUpdatesChan)
 
 			// Create channels for routes
-			healthCheckMapChan := make(chan map[string]HealthCheck, 1)
+			tasksMapChan := make(chan map[string]Task, 1)
 
 			// Create a WaitGroup to manage goroutines
 			var wg sync.WaitGroup
 
 			wg.Add(1)
-			go fetchHealthChecks(ctx, &wg, apiClient, healthCheckMapChan)
+			go fetchTasks(ctx, &wg, apiClient, tasksMapChan)
 
 			return nil
 		},

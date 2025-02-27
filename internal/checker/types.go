@@ -1,7 +1,7 @@
 package checker
 
-// HealthCheck represents the configuration for performing health checks on a service or endpoint.
-type HealthCheck struct {
+// Task represents the configuration for performing health checks on a service or endpoint.
+type Task struct {
 	NextHop       string `json:"nextHop"`  // NextHop specifies the address of the next hop for routing or forwarding traffic.
 	Path          string `json:"path"`     // Path specifies the endpoint to be used for the health check process.
 	Port          int    `json:"port"`     // Port specifies the port number to be used for the health check process.

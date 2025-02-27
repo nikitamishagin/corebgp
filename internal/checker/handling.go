@@ -8,8 +8,8 @@ import (
 	"sync"
 )
 
-func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, healthCheckChan chan<- HealthCheck) {
-	defer close(healthCheckChan)
+func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, taskUpdatesChan chan<- Task) {
+	defer close(taskUpdatesChan)
 
 	err := apiClient.WatchAnnouncements(ctx, func(event model.WatchEvent) {
 		select {
@@ -18,7 +18,7 @@ func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClien
 			return
 		default:
 			for i := range event.Data.NextHops {
-				HealthCheck := HealthCheck{
+				taskUpdate := Task{
 					NextHop:       event.Data.NextHops[i],
 					Path:          event.Data.HealthCheck.Path,
 					Port:          event.Data.HealthCheck.Port,
@@ -27,7 +27,7 @@ func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClien
 					Timeout:       event.Data.HealthCheck.Timeout,
 					Delay:         0,
 				}
-				healthCheckChan <- HealthCheck
+				taskUpdatesChan <- taskUpdate
 			}
 		}
 	})
@@ -38,32 +38,32 @@ func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClien
 	}
 }
 
-func fetchHealthChecks(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APIClient, healthCheckMapChan chan<- map[string]HealthCheck) {
+func fetchTasks(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.APIClient, tasksMapChan chan<- map[string]Task) {
 	defer wg.Done()
-	defer close(healthCheckMapChan)
+	defer close(tasksMapChan)
 
 	fmt.Println("Fetching all health checks from API...")
 
 	// Get all announcements from CoreBGP API
 	announcements, err := apiClient.GetAllAnnouncements(ctx)
 	if err != nil {
-		healthCheckMapChan <- map[string]HealthCheck{}
+		tasksMapChan <- map[string]Task{}
 		fmt.Printf("failed to fetch health checks from API: %v", err)
 		return
 	}
 	if len(announcements.Data) == 0 {
-		healthCheckMapChan <- map[string]HealthCheck{}
+		tasksMapChan <- map[string]Task{}
 		fmt.Println("No health checks found in API.")
 		return
 	}
 
 	// Convert announcement information to health checks
-	healthCheckMap := make(map[string]HealthCheck)
+	tasksMap := make(map[string]Task)
 	for i := range announcements.Data {
 		// Convert announcement information to health check object
 		for j := range announcements.Data[i].NextHops {
 			// Make health check object
-			healthCheck := HealthCheck{
+			task := Task{
 				NextHop:       announcements.Data[i].NextHops[j],
 				Path:          announcements.Data[i].HealthCheck.Path,
 				Port:          announcements.Data[i].HealthCheck.Port,
@@ -74,17 +74,17 @@ func fetchHealthChecks(ctx context.Context, wg *sync.WaitGroup, apiClient *v1.AP
 			}
 
 			// Create a new key and write to map
-			key := fmt.Sprintf("%s:%d%s_%s", healthCheck.NextHop, healthCheck.Port, healthCheck.Path, healthCheck.Method)
-			healthCheckMap[key] = healthCheck
+			key := fmt.Sprintf("%s:%d%s_%s", task.NextHop, task.Port, task.Path, task.Method)
+			tasksMap[key] = task
 		}
 	}
 
 	// Send the constructed health check map to the provided channel.
-	healthCheckMapChan <- healthCheckMap
+	tasksMapChan <- tasksMap
 	return
 }
 
 // TODO: Implement calculate function
-func calculateDelay(ctx context.Context, cancel context.CancelFunc, healthCheck HealthCheck) {
+func calculateDelay(ctx context.Context, cancel context.CancelFunc, healthCheck Task) {
 
 }
