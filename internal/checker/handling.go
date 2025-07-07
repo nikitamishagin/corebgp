@@ -5,8 +5,34 @@ import (
 	"fmt"
 	"github.com/nikitamishagin/corebgp/internal/model"
 	v1 "github.com/nikitamishagin/corebgp/pkg/client/v1"
+	"github.com/zeebo/xxh3"
+	"strconv"
 	"sync"
 )
+
+// handler is sketch of new main struct. I would like to rewrite functions to methods of this struct.
+type handler struct {
+	wg          *sync.WaitGroup
+	activeTasks map[string]Task
+	taskUpdates chan TaskUpdate
+	// TODO: Complete the struct
+}
+
+// GetActiveTasks retrieves the current map of active tasks being managed by the handler.
+func (h *handler) GetActiveTasks() map[string]Task {
+	return h.activeTasks
+}
+
+func (h *handler) AddActiveTask(task Task) error {
+	key := fmt.Sprintf("%s:%d%s_%s", task.NextHop, task.Port, task.Path, task.Method)
+	newHasher := xxh3.New()
+	_, err := newHasher.WriteString(key)
+	if err != nil {
+		return fmt.Errorf("failed to create hashe: %v", err)
+	}
+	hash := newHasher.Sum64()
+	h.activeTasks[strconv.FormatUint(hash, 10)] = task
+}
 
 func watchAnnouncements(ctx context.Context, cancel context.CancelFunc, apiClient *v1.APIClient, taskUpdatesChan chan<- TaskUpdate) {
 	defer close(taskUpdatesChan)

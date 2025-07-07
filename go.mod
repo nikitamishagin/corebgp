@@ -7,6 +7,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/osrg/gobgp/v3 v3.32.0
 	github.com/spf13/cobra v1.8.1
+	github.com/zeebo/xxh3 v1.0.2
 	go.etcd.io/etcd/client/v3 v3.5.17
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.34.1
